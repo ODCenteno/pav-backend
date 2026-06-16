@@ -1,20 +1,42 @@
-// import type { Core } from '@strapi/strapi';
+import type { Core } from '@strapi/strapi';
+
+const PUBLIC_PERMISSIONS = [
+  'api::category.category.find',
+  'api::category.category.findOne',
+  'api::listing.listing.find',
+  'api::listing.listing.findOne',
+  'api::team-member.team-member.find',
+  'api::team-member.team-member.findOne',
+  'api::organization.organization.find',
+  'api::organization.organization.findOne',
+  'api::site-content.site-content.find',
+  'api::site-content.site-content.findOne',
+];
 
 export default {
-  /**
-   * An asynchronous register function that runs before
-   * your application is initialized.
-   *
-   * This gives you an opportunity to extend code.
-   */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register() {},
 
-  /**
-   * An asynchronous bootstrap function that runs before
-   * your application gets started.
-   *
-   * This gives you an opportunity to set up your data model,
-   * run jobs, or perform some special logic.
-   */
-  bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {},
+  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    const publicRole = await strapi.db
+      .query('plugin::users-permissions.role')
+      .findOne({ where: { type: 'public' } });
+
+    if (!publicRole) {
+      strapi.log.warn('Public role not found; skipping permission bootstrap');
+      return;
+    }
+
+    for (const action of PUBLIC_PERMISSIONS) {
+      const existing = await strapi.db
+        .query('plugin::users-permissions.permission')
+        .findOne({ where: { action, role: publicRole.id } });
+
+      if (!existing) {
+        await strapi.db
+          .query('plugin::users-permissions.permission')
+          .create({ data: { action, role: publicRole.id } });
+        strapi.log.info(`Granted public permission: ${action}`);
+      }
+    }
+  },
 };

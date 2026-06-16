@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "site_contents",
+  "info": {
+    "singularName": "site-content",
+    "pluralName": "site-contents",
+    "displayName": "Site Content",
+    "description": "Sectioned content blocks keyed by section name (about-intro, guide-hero, etc.)."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "text": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "order": {
+      "type": "integer",
+      "default": 0
+    },
+    "extraData": {
+      "type": "json"
+    }
+  }
+}

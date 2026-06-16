@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "team_members",
+  "info": {
+    "singularName": "team-member",
+    "pluralName": "team-members",
+    "displayName": "Team Member",
+    "description": "People behind the project."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "role": {
+      "type": "json"
+    },
+    "shortBio": {
+      "type": "json"
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "links": {
+      "type": "json"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0
+    },
+    "isFeatured": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
