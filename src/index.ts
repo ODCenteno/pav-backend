@@ -5,12 +5,18 @@ const PUBLIC_PERMISSIONS = [
   'api::category.category.findOne',
   'api::listing.listing.find',
   'api::listing.listing.findOne',
+  'api::community-member.community-member.find',
+  'api::community-member.community-member.findOne',
   'api::team-member.team-member.find',
   'api::team-member.team-member.findOne',
   'api::organization.organization.find',
   'api::organization.organization.findOne',
   'api::site-content.site-content.find',
   'api::site-content.site-content.findOne',
+  'api::legal-page.legal-page.find',
+  'api::legal-page.legal-page.findOne',
+  'api::site-global.site-global.find',
+  'api::homepage.homepage.find',
 ];
 
 export default {

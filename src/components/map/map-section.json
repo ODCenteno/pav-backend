@@ -1,0 +1,52 @@
+{
+  "collectionName": "components_map_map_sections",
+  "info": {
+    "displayName": "Sección de Mapa",
+    "description": "Sección del mapa con descripción, botón y URL, imagen de fondo.",
+    "icon": "address",
+    "singularName": "map-section",
+    "pluralName": "map-sections"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la sección. Ejemplo: Encuéntranos en el mapa."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción que acompaña al mapa."
+    },
+    "buttonLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del botón de acción. Ejemplo: Ver en Google Maps."
+    },
+    "buttonUrl": {
+      "type": "string",
+      "description": "URL a la que lleva el botón. Ejemplo: https://maps.google.com/?q=..."
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"],
+      "description": "Imagen de fondo de la sección del mapa."
+    }
+  }
+}

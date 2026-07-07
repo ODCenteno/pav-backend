@@ -19,6 +19,13 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => 
     nps: env.bool('FLAG_NPS', true),
     promoteEE: env.bool('FLAG_PROMOTE_EE', true),
   },
+  preview: {
+    enabled: false,  // or true if you want a live preview button
+    config: {
+      handler: () => undefined,
+      allowedOrigins: [],
+    },
+  },
 });
 
 export default config;

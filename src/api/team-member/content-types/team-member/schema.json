@@ -4,22 +4,34 @@
   "info": {
     "singularName": "team-member",
     "pluralName": "team-members",
-    "displayName": "Team Member",
-    "description": "People behind the project."
+    "displayName": "Miembro del Equipo",
+    "description": "Personas detrás del proyecto."
   },
   "options": {
     "draftAndPublish": true
   },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
   "attributes": {
     "name": {
       "type": "string",
-      "required": true
+      "required": true,
+      "description": "Nombre completo de la persona."
     },
     "role": {
-      "type": "json"
+      "type": "component",
+      "repeatable": false,
+      "component": "common.localized-text",
+      "description": "Cargo o rol de la persona dentro del proyecto."
     },
     "shortBio": {
-      "type": "json"
+      "type": "component",
+      "repeatable": false,
+      "component": "common.localized-text",
+      "description": "Biografía breve en español e inglés."
     },
     "photo": {
       "type": "media",
@@ -27,18 +39,24 @@
       "required": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "description": "Fotografía de la persona."
     },
     "links": {
-      "type": "json"
+      "type": "component",
+      "repeatable": false,
+      "component": "contact.links",
+      "description": "Enlaces y redes sociales de la persona."
     },
     "order": {
       "type": "integer",
-      "default": 0
+      "default": 0,
+      "description": "Orden de aparición. Los números menores aparecen primero."
     },
     "isFeatured": {
       "type": "boolean",
-      "default": true
+      "default": true,
+      "description": "Marca esta casilla para destacar a la persona en la página."
     }
   }
 }

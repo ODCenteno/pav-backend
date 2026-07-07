@@ -1,0 +1,42 @@
+{
+  "collectionName": "components_quickfact_quick_facts",
+  "info": {
+    "displayName": "Dato Rápido",
+    "description": "Dato para la cuadrícula bento de datos rápidos (título, valor, descripción).",
+    "icon": "information",
+    "singularName": "quick-fact",
+    "pluralName": "quick-facts"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título del dato. Ejemplo: Población, Clima, Idioma."
+    },
+    "value": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Valor destacado del dato. Ejemplo: 250 habitantes, 25°C promedio."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción o contexto adicional del dato."
+    }
+  }
+}

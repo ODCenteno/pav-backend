@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_common_localized_texts",
+  "info": {
+    "displayName": "Texto Bilingüe",
+    "description": "Texto corto con versión en español e inglés. Usado para descripciones breves, roles y biografías.",
+    "icon": "align-left",
+    "singularName": "localized-text",
+    "pluralName": "localized-texts"
+  },
+  "options": {},
+  "attributes": {
+    "text_es": {
+      "type": "text",
+      "required": true,
+      "description": "Texto en español."
+    },
+    "text_en": {
+      "type": "text",
+      "description": "Texto en inglés. Opcional: si está vacío, el frontend usará el texto en español."
+    }
+  }
+}

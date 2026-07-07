@@ -4,8 +4,8 @@
   "info": {
     "singularName": "category",
     "pluralName": "categories",
-    "displayName": "Category",
-    "description": "Top-level category for listings (experiences, accommodation, restaurants, services, sites)."
+    "displayName": "Categoría",
+    "description": "Categoría principal para agrupar lugares (experiencias, hospedaje, restaurantes, servicios, sitios)."
   },
   "options": {
     "draftAndPublish": true
@@ -23,7 +23,8 @@
         "i18n": {
           "localized": true
         }
-      }
+      },
+      "description": "Nombre de la categoría. Ejemplo: Experiencias, Hospedaje, Restaurantes."
     },
     "slug": {
       "type": "uid",
@@ -33,23 +34,28 @@
         "i18n": {
           "localized": true
         }
-      }
+      },
+      "description": "Identificador único en la URL."
     },
     "icon": {
       "type": "string",
-      "default": "location"
+      "default": "location",
+      "description": "Nombre del ícono a mostrar (del catálogo de íconos de Strapi). Ejemplo: location, star, shopping-cart."
     },
     "color": {
       "type": "string",
-      "default": "#5A8A80"
+      "default": "#5A8A80",
+      "description": "Color hexadecimal de la categoría. Ejemplo: #5A8A80"
     },
     "order": {
       "type": "integer",
-      "default": 0
+      "default": 0,
+      "description": "Orden de aparición. Los números menores aparecen primero."
     },
     "isActive": {
       "type": "boolean",
-      "default": true
+      "default": true,
+      "description": "Marca esta casilla para que la categoría aparezca en el sitio público."
     },
     "description": {
       "type": "text",
@@ -57,13 +63,15 @@
         "i18n": {
           "localized": true
         }
-      }
+      },
+      "description": "Descripción breve de la categoría."
     },
     "listings": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::listing.listing",
-      "mappedBy": "category"
+      "mappedBy": "category",
+      "description": "Lugares que pertenecen a esta categoría."
     }
   }
 }

@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_product_items",
+  "info": {
+    "displayName": "Producto o Servicio",
+    "description": "Un producto o servicio estructurado ofrecido por un lugar (nombre + descripción).",
+    "icon": "shopping-cart",
+    "singularName": "product-item",
+    "pluralName": "product-items"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Nombre del producto o servicio. Ejemplo: Tour de medio día, Menú degustación."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción del producto o servicio."
+    }
+  }
+}

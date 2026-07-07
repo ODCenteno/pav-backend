@@ -1,61 +1,93 @@
-# 🚀 Getting started with Strapi
+# Puerto Agua Verde — Strapi Backend
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
+Strapi v5 CMS backend for the Puerto Agua Verde / Rancho San Cosme destination site.
 
-### `develop`
+## Stack
 
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
+- **Strapi v5.39** with SQLite (dev) / PostgreSQL-ready (prod)
+- **Cloudflare R2** for media storage (S3-compatible API)
+- **pnpm** workspace member
 
-```
-npm run develop
-# or
-yarn develop
-```
+## Setup
 
-### `start`
+```bash
+# 1. Install dependencies
+pnpm install
 
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
+# 2. Copy and fill in environment variables
+cp .env.example .env
+# Edit .env with your values — see .env.example for all required vars
 
-```
-npm run start
-# or
-yarn start
-```
-
-### `build`
-
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
-
-```
-npm run build
-# or
-yarn build
+# 3. Start development server
+pnpm develop
 ```
 
-## ⚙️ Deployment
+The admin panel will be at `http://localhost:1337/admin`.
 
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
+## Environment variables
 
+Copy `.env.example` → `.env` and fill in all values. Key variables:
+
+| Variable | Description |
+|---|---|
+| `APP_KEYS` | Strapi app keys (comma-separated) |
+| `ADMIN_JWT_SECRET` | Admin auth secret |
+| `API_TOKEN_SALT` | API token salt |
+| `JWT_SECRET` | JWT secret |
+| `ENCRYPTION_KEY` | Strapi encryption key |
+| `DATABASE_FILENAME` | SQLite DB path (dev default: `.tmp/data.db`) |
+| `R2_ENDPOINT` | Cloudflare R2 S3 API endpoint |
+| `R2_ACCESS_KEY_ID` | R2 API token access key |
+| `R2_SECRET_ACCESS_KEY` | R2 API token secret |
+| `R2_BUCKET` | R2 bucket name (e.g. `pav-assets`) |
+| `R2_PUBLIC_BASE_URL` | Public URL for R2 bucket (R2.dev URL or custom domain) |
+
+## Media uploads
+
+Images are stored in **Cloudflare R2** via `@strapi/provider-upload-aws-s3`.
+
+- Allowed formats: `jpg`, `png`, `webp`
+- Max size: 3 MB
+- Validation errors shown in **Spanish**
+
+### R2 CORS
+
+Add the following CORS rule to your R2 bucket in the Cloudflare dashboard:
+
+```json
+{
+  "CORSRules": [{
+    "AllowedOrigins": ["http://localhost:1337", "http://localhost:4321"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }]
+}
 ```
-yarn strapi deploy
+
+## Content types
+
+- **Listing** — places, restaurants, experiences (with structured components for location, contact, schedule, tags, amenities, recommendations)
+- **Category** — listing categories
+- **Organization** — community org info
+- **Team Member** — community team
+- **Site Content** — reusable content blocks
+- **Homepage** — homepage sections (hero, destinations, highlights, quick facts, map, CTA)
+
+All schemas use Spanish `displayName`, `description`, and field-level helper text for non-technical admin users.
+
+## Scripts
+
+```bash
+pnpm develop      # Start dev server with auto-reload
+pnpm build        # Build admin panel
+pnpm start        # Start production server
+pnpm seed         # Run the seed script (populates initial data)
 ```
 
-## 📚 Learn more
+## Deployment
 
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
+Strapi supports multiple deployment targets. See the [Strapi deployment docs](https://docs.strapi.io/dev-docs/deployment) for options (Strapi Cloud, Node server, Docker, etc.).
 
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
-
-## ✨ Community
-
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
-
----
-
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
+For production, switch `DATABASE_CLIENT` to `postgres` and set the corresponding `DATABASE_*` env vars.

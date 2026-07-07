@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_cta_cta_sections",
+  "info": {
+    "displayName": "Llamada a la Acción (CTA)",
+    "description": "Sección final de llamada a la acción al pie de la página.",
+    "icon": "megaphone",
+    "singularName": "cta-section",
+    "pluralName": "cta-sections"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la llamada a la acción. Ejemplo: ¿Listo para visitarnos?"
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción que invita al usuario a actuar."
+    },
+    "buttonLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del botón. Ejemplo: Contáctanos."
+    },
+    "buttonLink": {
+      "type": "string",
+      "description": "URL a la que lleva el botón. Ejemplo: /contacto, mailto:info@..."
+    }
+  }
+}

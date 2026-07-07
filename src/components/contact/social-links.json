@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_contact_social_links",
+  "info": {
+    "displayName": "Enlace Social",
+    "description": "Un canal de red social o contacto (plataforma + identificador + URL). Compartido entre miembros de la comunidad, lugares y organizaciones.",
+    "icon": "link",
+    "singularName": "social-link",
+    "pluralName": "social-links"
+  },
+  "options": {},
+  "attributes": {
+    "platform": {
+      "type": "enumeration",
+      "enum": ["instagram", "facebook", "tiktok", "whatsapp", "web", "other"],
+      "default": "web",
+      "required": true,
+      "description": "Plataforma de la red social o canal de contacto."
+    },
+    "handle": {
+      "type": "string",
+      "description": "Nombre de usuario o identificador en la plataforma (sin @)."
+    },
+    "url": {
+      "type": "string",
+      "description": "URL completa del perfil o canal. Ejemplo: https://instagram.com/usuario"
+    }
+  }
+}

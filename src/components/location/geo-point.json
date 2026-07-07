@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_location_geo_points",
+  "info": {
+    "displayName": "Ubicación Geográfica",
+    "description": "Coordenadas GPS y nombre del lugar con soporte bilingüe.",
+    "icon": "map-marker",
+    "singularName": "geo-point",
+    "pluralName": "geo-points"
+  },
+  "options": {},
+  "attributes": {
+    "lat": {
+      "type": "float",
+      "required": true,
+      "description": "Latitud. Ejemplo: 25.5123. Puedes obtenerla desde Google Maps haciendo clic derecho en el punto."
+    },
+    "lng": {
+      "type": "float",
+      "required": true,
+      "description": "Longitud. Ejemplo: -111.0456. Puedes obtenerla desde Google Maps haciendo clic derecho en el punto."
+    },
+    "name_es": {
+      "type": "string",
+      "description": "Nombre del lugar en español. Ejemplo: Muelle de Puerto Agua Verde."
+    },
+    "name_en": {
+      "type": "string",
+      "description": "Nombre del lugar en inglés. Opcional: si está vacío, se usará el nombre en español."
+    },
+    "locality": {
+      "type": "enumeration",
+      "enum": ["agua-verde", "rancho-san-cosme"],
+      "default": "agua-verde",
+      "description": "Localidad a la que pertenece el lugar."
+    },
+    "googleMapsUrl": {
+      "type": "string",
+      "description": "Enlace directo a Google Maps (opcional)."
+    }
+  }
+}

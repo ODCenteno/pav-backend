@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_section_section_headers",
+  "info": {
+    "displayName": "Encabezado de Sección",
+    "description": "Bloque reutilizable de título y subtítulo para una sección.",
+    "icon": "text",
+    "singularName": "section-header",
+    "pluralName": "section-headers"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la sección."
+    },
+    "subtitle": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Subtítulo o descripción breve de la sección."
+    }
+  }
+}

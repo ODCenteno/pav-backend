@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_recommendation_visit_infos",
+  "info": {
+    "displayName": "Información para Visitantes",
+    "description": "Recomendaciones y notas útiles para visitantes (mejor época, qué llevar, accesibilidad, conectividad).",
+    "icon": "info",
+    "singularName": "visit-info",
+    "pluralName": "visit-infos"
+  },
+  "options": {},
+  "attributes": {
+    "bestTime_es": {
+      "type": "text",
+      "description": "Mejor época u horario para visitar, en español. Ejemplo: Mañana (8 AM - 12 PM), de noviembre a abril."
+    },
+    "bestTime_en": {
+      "type": "text",
+      "description": "Best time/season to visit, in English. Example: Morning (8 AM - 12 PM), November through April."
+    },
+    "bring_es": {
+      "type": "text",
+      "description": "Qué llevar — un artículo por línea. Ejemplo:\nProtector solar biodegradable\nToalla\nGorra\nAgua"
+    },
+    "bring_en": {
+      "type": "text",
+      "description": "What to bring — one item per line. Example:\nBiodegradable sunscreen\nTowel\nCap\nWater"
+    },
+    "accessibilityNotes_es": {
+      "type": "text",
+      "description": "Notas sobre accesibilidad en español. Ejemplo: Acceso por camino de terracería; no apto para sillas de ruedas."
+    },
+    "accessibilityNotes_en": {
+      "type": "text",
+      "description": "Accessibility notes in English. Example: Dirt-road access; not wheelchair-friendly."
+    },
+    "connectivityNotes_es": {
+      "type": "text",
+      "description": "Notas sobre señal celular e internet en español. Ejemplo: Señal limitada (Telcel). Sin wifi."
+    },
+    "connectivityNotes_en": {
+      "type": "text",
+      "description": "Cell signal and internet notes in English. Example: Limited cell signal (Telcel). No wifi."
+    }
+  }
+}

@@ -122,6 +122,7 @@ coverage
 ############################
 
 .env
+.env.*
 .env.example
 license.txt
 exports
@@ -130,5 +131,9 @@ dist
 build
 .strapi-updater.json
 .strapi-cloud.json
-R2-integration-plan.md
+
 FRONTEND_HANDOFF.md
+.env.example
+.agents/
+opencode.json
+skills-lock.json

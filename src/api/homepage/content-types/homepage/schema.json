@@ -1,0 +1,97 @@
+{
+  "kind": "singleType",
+  "collectionName": "homepages",
+  "info": {
+    "singularName": "homepage",
+    "pluralName": "homepages",
+    "displayName": "Página de Inicio",
+    "description": "Contenido de todas las secciones de la página principal. Solo hay una entrada de este tipo."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "internalLabel": {
+      "type": "string",
+      "default": "Homepage",
+      "description": "Etiqueta interna para identificar esta entrada en la lista de borradores."
+    },
+    "hero": {
+      "type": "component",
+      "component": "hero.hero-section",
+      "repeatable": false,
+      "description": "Carrusel principal en la parte superior de la página (hero)."
+    },
+    "destinationsHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "description": "Encabezado de la sección de destinos."
+    },
+    "destinations": {
+      "type": "component",
+      "component": "destination.destination-story",
+      "repeatable": true,
+      "description": "Tarjetas de historias de destinos. Agrega una por cada destino destacado."
+    },
+    "highlightsHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "description": "Encabezado de la sección de destacados."
+    },
+    "highlights": {
+      "type": "component",
+      "component": "highlight.highlight-card",
+      "repeatable": true,
+      "description": "Tarjetas destacadas. Agrega una por cada elemento destacado."
+    },
+    "quickFactsHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "description": "Encabezado de la sección de datos rápidos."
+    },
+    "quickFacts": {
+      "type": "component",
+      "component": "quickfact.quick-fact",
+      "repeatable": true,
+      "description": "Datos rápidos (cuadrícula bento). Agrega uno por cada dato."
+    },
+    "quickFactsImage1": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Primera imagen decorativa de la sección de datos rápidos."
+    },
+    "quickFactsImage2": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Segunda imagen decorativa de la sección de datos rápidos."
+    },
+    "mapSection": {
+      "type": "component",
+      "component": "map.map-section",
+      "repeatable": false,
+      "description": "Sección del mapa con llamada a la acción."
+    },
+    "finalCta": {
+      "type": "component",
+      "component": "cta.cta-section",
+      "repeatable": false,
+      "description": "Llamada a la acción final al pie de la página."
+    }
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "kind": "singleType",
+  "collectionName": "site_globals",
+  "info": {
+    "singularName": "site-global",
+    "pluralName": "site-globals",
+    "displayName": "Configuración Global del Sitio",
+    "description": "Información de contacto, redes sociales y metadatos del sitio. Solo hay una entrada de este tipo."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "contactEmail": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Correo electrónico principal de contacto."
+    },
+    "contactPhone": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Teléfono principal de contacto."
+    },
+    "contactPhoneRaw": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Número de teléfono sin formato para enlaces tel:. Ejemplo: +521234567890"
+    },
+    "contactWhatsapp": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Número de WhatsApp con código de país."
+    },
+    "contactAddress": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Dirección física del proyecto."
+    },
+    "socialInstagram": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Usuario de Instagram (sin @)."
+    },
+    "socialFacebook": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Nombre o URL de la página de Facebook."
+    },
+    "socialGoogleMaps": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "URL de Google Maps."
+    },
+    "metadataSiteName": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Nombre del sitio usado en metadatos SEO y redes sociales."
+    },
+    "metadataDefaultTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título por defecto de las páginas (etiqueta <title>)."
+    },
+    "metadataDefaultDescription": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción por defecto para SEO (etiqueta meta description)."
+    },
+    "seoKeywords": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Palabras clave para SEO separadas por comas."
+    },
+    "seoOgImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Imagen por defecto para compartir en redes sociales (Open Graph)."
+    },
+    "seoOgUrl": {
+      "type": "string",
+      "description": "URL canónica del sitio para Open Graph."
+    },
+    "seoAuthor": {
+      "type": "string",
+      "description": "Nombre del autor o equipo responsable del sitio."
+    },
+    "seoThemeColor": {
+      "type": "string",
+      "default": "#5A8A80",
+      "description": "Color del tema para navegadores móviles. Formato hexadecimal."
+    },
+    "logoImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Logotipo principal del sitio."
+    },
+    "logoShortName": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Nombre corto del sitio para mostrar en el encabezado (ej: PAV)."
+    }
+  }
+}

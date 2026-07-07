@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_schedule_hours",
+  "info": {
+    "displayName": "Horario de Atención",
+    "description": "Horario de operación del lugar, con versión en español e inglés.",
+    "icon": "clock",
+    "singularName": "hours",
+    "pluralName": "hours"
+  },
+  "options": {},
+  "attributes": {
+    "isAlwaysOpen": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marca esta casilla si el lugar está abierto las 24 horas del día, los 7 días de la semana."
+    },
+    "text_es": {
+      "type": "text",
+      "description": "Horario en español. Ejemplo: Lunes a viernes, 8:00 AM - 5:00 PM. Sábados 9:00 AM - 2:00 PM."
+    },
+    "text_en": {
+      "type": "text",
+      "description": "Horario en inglés. Ejemplo: Monday to Friday, 8:00 AM - 5:00 PM. Saturdays 9:00 AM - 2:00 PM."
+    }
+  }
+}

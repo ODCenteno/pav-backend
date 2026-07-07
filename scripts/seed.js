@@ -19,6 +19,26 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+// Load .env file manually (Node.js doesn't auto-load .env)
+const envPath = path.resolve(__dirname, "../.env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed
+      .slice(eqIdx + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
+    if (!(key in process.env)) {
+      process.env[key] = val;
+    }
+  }
+}
+
 const STRAPI_URL = process.env.STRAPI_URL || "http://localhost:1337";
 const STRAPI_ADMIN_TOKEN = process.env.STRAPI_ADMIN_TOKEN || "";
 
@@ -73,12 +93,8 @@ const aboutData = loadModule(aboutDataRaw);
 const guideData = loadModule(guideDataRaw);
 
 const listings = categoryData.categoryData;
-const {
-  introData,
-  valuesData,
-  communityMessageData,
-  collaborationData,
-} = aboutData;
+const { introData, valuesData, communityMessageData, collaborationData } =
+  aboutData;
 const {
   heroData,
   introData: guideIntro,
@@ -114,7 +130,7 @@ async function strapiPost(pathname, data, locale) {
   const url = new URL(`${STRAPI_URL}/api${pathname}`);
   if (locale) url.searchParams.set("locale", locale);
   const res = await fetch(url.toString(), {
-    method: "POST",
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ADMIN_TOKEN}`,
@@ -124,6 +140,24 @@ async function strapiPost(pathname, data, locale) {
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`POST ${pathname} failed: ${res.status} ${body}`);
+  }
+  return res.json();
+}
+
+async function strapiPut(pathname, data, locale) {
+  const url = new URL(`${STRAPI_URL}/api${pathname}`);
+  if (locale) url.searchParams.set("locale", locale);
+  const res = await fetch(url.toString(), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ADMIN_TOKEN}`,
+    },
+    body: JSON.stringify({ data }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`PUT ${pathname} failed: ${res.status} ${body}`);
   }
   return res.json();
 }
@@ -318,10 +352,45 @@ function buildAboutEntries() {
         links: collaborationData?.links,
       },
     },
+  ];
+}
+
+function buildFooterEntries() {
+  return [
     {
-      key: "homepage-hero",
-      title: { es: "Hero del Home", en: "Home Hero" },
-      text: { es: "", en: "" },
+      key: "footer-about",
+      title: {
+        es: "Puerto Agua Verde y Rancho San Cosme",
+        en: "Puerto Agua Verde y Rancho San Cosme",
+      },
+      text: {
+        es: "Guía comunitaria oficial de Puerto Agua Verde y Rancho San Cosme, Baja California Sur. Descubre, explora y vive el destino de manera responsable.",
+        en: "An official community guide to Puerto Agua Verde & Rancho San Cosme, Baja California Sur. Discover, explore, and experience responsibly.",
+      },
+      extraData: {
+        thanks: {
+          es: "Gracias por visitar y por ayudar a mantener este lugar especial. Viaja con respeto, apoya lo local y deja solo huellas.",
+          en: "Thank you for visiting and for helping keep this place special. Travel with care, support local, and leave only footprints.",
+        },
+        rights: {
+          es: "Todos los derechos reservados.",
+          en: "All rights reserved.",
+        },
+        legal: {
+          es: "Aviso de Privacidad · Términos y Condiciones",
+          en: "Privacy Notice · Terms & Conditions",
+        },
+      },
+    },
+    {
+      key: "footer-contact",
+      title: { es: "Contáctanos", en: "Contact Us" },
+      extraData: {
+        note: {
+          es: "Para avisos sobre clima, caminos y novedades locales, síguenos en redes sociales.",
+          en: "For updates on weather, road conditions, and local notices, follow our social channels.",
+        },
+      },
     },
   ];
 }
@@ -413,6 +482,257 @@ function buildGuideEntries() {
   ];
 }
 
+// ---------- homepage single type ----------
+
+async function seedHomepage() {
+  console.log("\n=== Seeding homepage ===");
+
+  // Check if homepage already has content for any locale
+  let existing;
+  try {
+    existing = await strapiGet("/homepage", {});
+  } catch {
+    existing = null;
+  }
+
+  const homepageDataEs = {
+    internalLabel: "Homepage",
+    hero: {
+      title: "Puerto Agua Verde &",
+      titleHighlight: "Rancho San Cosme",
+      description:
+        "Un destino natural en Baja California Sur donde la tranquilidad, la tradición y los paisajes espectaculares se encuentran con la auténtica vida costera. Explora playas, experiencias locales, senderos y servicios para planear tu visita.",
+      ctaLabel: "Explorar el destino",
+      ctaLink: "/sitios",
+    },
+    destinationsHeader: {
+      title: "Conoce el destino",
+      subtitle: "Descubre la historia y cultura de estos lugares únicos",
+    },
+    destinations: [
+      {
+        title: "Puerto Agua Verde",
+        text: "Puerto Agua Verde es un pequeño rincón de Baja California Sur conocido por sus aguas color turquesa, su ambiente comunitario y su naturaleza intacta. Aquí se combinan la pesca tradicional, las playas tranquilas y las actividades al aire libre que atraen a viajeros en busca de autenticidad y paz.",
+      },
+      {
+        title: "Rancho San Cosme",
+        text: "Rancho San Cosme es un espacio histórico y cultural donde la vida rural se mantiene viva. Rodeado de montañas y vegetación desértica, es un punto de encuentro para visitantes que buscan experiencias locales, senderos, actividades guiadas y conexión con la naturaleza.",
+      },
+    ],
+    highlightsHeader: {
+      title: "Lo más destacado",
+      subtitle: "Descubre las mejores opciones para tu visita",
+    },
+    highlights: [
+      {
+        title: "Experiencias para disfrutar",
+        description:
+          "Descubre actividades únicas para conectar con la naturaleza, la cultura local y la hospitalidad de la comunidad.",
+        link: "/experiencias",
+      },
+      {
+        title: "Hospédate con nosotros",
+        description:
+          "Encuentra opciones de alojamiento que combinan comodidad, naturaleza y una vista privilegiada del paisaje.",
+        link: "/sitios?category=accommodation",
+      },
+      {
+        title: "Sabores de la región",
+        description:
+          "Desde mariscos frescos hasta cocina tradicional, conoce los lugares donde podrás disfrutar la gastronomía local.",
+        link: "/sitios?category=restaurants",
+      },
+    ],
+    quickFactsHeader: {
+      title: "Lo esencial de un vistazo",
+      subtitle:
+        "Datos rápidos para entender por qué Puerto Agua Verde y Rancho San Cosme merecen el viaje.",
+    },
+    quickFacts: [
+      {
+        title: "A ~2 horas de Loreto",
+        value: "98 km",
+        description:
+          "Puerto Agua Verde se encuentra a unos 98 km de Loreto, con un trayecto aproximado de 2 horas en auto.",
+      },
+      {
+        title: "A ~5 horas de La Paz",
+        value: "360 km",
+        description:
+          "Desde La Paz, el recorrido es de alrededor de 360 km, con un tiempo estimado de casi 5 horas por carretera.",
+      },
+      {
+        title: "Mejor época",
+        value: "Mayo–junio",
+        description:
+          "La mejor ventana para actividades al aire libre va de principios de mayo a mediados de junio. Octubre también destaca.",
+      },
+      {
+        title: "Naturaleza cercana",
+        value: "5 islas",
+        description:
+          "El Parque Nacional Bahía de Loreto reúne cinco islas principales, uno de los grandes atractivos naturales de la región.",
+      },
+      {
+        title: "Biodiversidad",
+        value: "1,300+ especies",
+        description:
+          "En el Parque Nacional Bahía de Loreto se han registrado más de 1,300 especies de plantas y animales.",
+      },
+      {
+        title: "Qué hacer",
+        value: "Snorkel · Kayak · Hiking",
+        description:
+          "La región destaca por actividades como kayak, snorkel, senderismo, campamento y observación de fauna.",
+      },
+    ],
+    mapSection: {
+      title: "Mapa del Destino",
+      description:
+        "Explora los puntos clave de Puerto Agua Verde y Rancho San Cosme. Encuentra rutas, servicios, playas y actividades cerca de ti.",
+      buttonLabel: "Ver Mapa en OpenStreetMap",
+      buttonUrl:
+        "https://www.openstreetmap.org/?#map=15/25.51204/-111.07577&layers=C",
+    },
+    finalCta: {
+      title: "Tu viaje comienza aquí",
+      description:
+        "Puerto Agua Verde y Rancho San Cosme no son solo puntos en el mapa, son paisajes vivos de mar, desierto y tradición. Planea tu estancia, explora experiencias locales y descubre el ritmo auténtico de la vida en Baja.",
+      buttonLabel: "Comenzar a planear mi visita",
+      buttonLink: "/sitios",
+    },
+  };
+
+  const homepageDataEn = {
+    internalLabel: "Homepage",
+    hero: {
+      title: "Puerto Agua Verde &",
+      titleHighlight: "Rancho San Cosme",
+      description:
+        "A natural destination in Baja California Sur where tranquility, tradition, and spectacular landscapes meet authentic coastal life. Explore beaches, local experiences, trails, and services to plan your visit.",
+      ctaLabel: "Explore the destination",
+      ctaLink: "/en/sitios",
+    },
+    destinationsHeader: {
+      title: "Discover the destination",
+      subtitle: "Learn about the history and culture of these unique places",
+    },
+    destinations: [
+      {
+        title: "Puerto Agua Verde",
+        text: "Puerto Agua Verde is a small corner of Baja California Sur known for its turquoise waters, community atmosphere, and untouched nature. Here, traditional fishing, quiet beaches, and outdoor activities combine to attract travelers in search of authenticity and peace.",
+      },
+      {
+        title: "Rancho San Cosme",
+        text: "Rancho San Cosme is a historical and cultural space where rural life remains alive. Surrounded by mountains and desert vegetation, it is a meeting point for visitors seeking local experiences, trails, guided activities, and connection with nature.",
+      },
+    ],
+    highlightsHeader: {
+      title: "Highlights",
+      subtitle: "Discover the best options for your visit",
+    },
+    highlights: [
+      {
+        title: "Experiences to enjoy",
+        description:
+          "Discover unique activities to connect with nature, local culture, and community hospitality.",
+        link: "/en/experiences",
+      },
+      {
+        title: "Stay with us",
+        description:
+          "Find accommodation options that combine comfort, nature, and a privileged view of the landscape.",
+        link: "/en/sitios?category=accommodation",
+      },
+      {
+        title: "Flavors of the region",
+        description:
+          "From fresh seafood to traditional cuisine, discover the places where you can enjoy local gastronomy.",
+        link: "/en/sitios?category=restaurants",
+      },
+    ],
+    quickFactsHeader: {
+      title: "At a glance",
+      subtitle:
+        "A few facts that make Puerto Agua Verde & Rancho San Cosme worth the trip.",
+    },
+    quickFacts: [
+      {
+        title: "~2 hours from Loreto",
+        value: "98 km",
+        description:
+          "Puerto Agua Verde is about 98 km from Loreto, with a driving time of roughly 2 hours.",
+      },
+      {
+        title: "~5 hours from La Paz",
+        value: "360 km",
+        description:
+          "From La Paz, the route is about 360 km, with an estimated drive of around 5 hours.",
+      },
+      {
+        title: "Best season",
+        value: "May–June",
+        description:
+          "The best window for outdoor activities runs from early May to mid-June. October is also a strong option.",
+      },
+      {
+        title: "Protected nature nearby",
+        value: "5 islands",
+        description:
+          "Loreto Bay National Park includes five major islands, one of the region's standout natural treasures.",
+      },
+      {
+        title: "Biodiversity",
+        value: "1,300+ species",
+        description:
+          "More than 1,300 plant and animal species have been recorded in Loreto Bay National Park.",
+      },
+      {
+        title: "What to do",
+        value: "Snorkel · Kayak · Hiking",
+        description:
+          "The area is ideal for kayaking, snorkeling, hiking, camping, and wildlife-focused activities.",
+      },
+    ],
+    mapSection: {
+      title: "Destination Map",
+      description:
+        "Explore key points of Puerto Agua Verde and Rancho San Cosme. Find routes, services, beaches, and activities near you.",
+      buttonLabel: "View Map on OpenStreetMap",
+      buttonUrl:
+        "https://www.openstreetmap.org/?#map=15/25.51204/-111.07577&layers=C",
+    },
+    finalCta: {
+      title: "Your journey begins here",
+      description:
+        "Puerto Agua Verde and Rancho San Cosme are more than places on the map, they are living landscapes of sea, desert, and tradition. Plan your stay, explore local experiences, and discover the rhythm of authentic Baja life.",
+      buttonLabel: "Start planning your visit",
+      buttonLink: "/en/sitios",
+    },
+  };
+
+  // Single type: POST to create, PUT to update. Check existence first.
+  // Note: strapiGet throws on 404, but for empty singleTypes 404 means "no entry yet"
+  let existingHomepage = null;
+  try {
+    existingHomepage = await strapiGet("/homepage", {});
+  } catch (err) {
+    if (!err.message.includes("404")) throw err;
+  }
+  if (existingHomepage && existingHomepage.id) {
+    console.log("  homepage entry exists, updating (es)...");
+    await strapiPut("/homepage", homepageDataEs, "es");
+    await strapiPut("/homepage", homepageDataEn, "en");
+    console.log("  + updated homepage (es + en)");
+  } else {
+    console.log("  creating homepage entry (es)...");
+    await strapiPost("/homepage", homepageDataEs, "es");
+    console.log("  creating homepage entry (en)...");
+    await strapiPost("/homepage", homepageDataEn, "en");
+    console.log("  + created homepage (es + en)");
+  }
+}
+
 // ---------- run ----------
 
 (async () => {
@@ -420,7 +740,9 @@ function buildGuideEntries() {
     await seedCategories();
     await seedListings();
     await seedSiteContent(buildAboutEntries());
+    await seedSiteContent(buildFooterEntries());
     await seedSiteContent(buildGuideEntries());
+    await seedHomepage();
     console.log("\nSeed complete.");
   } catch (e) {
     console.error("Seed failed:", e);

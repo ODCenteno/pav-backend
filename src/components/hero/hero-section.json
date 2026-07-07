@@ -1,0 +1,62 @@
+{
+  "collectionName": "components_hero_hero_sections",
+  "info": {
+    "displayName": "Sección Hero (Carrusel Principal)",
+    "description": "Carrusel principal en la cabecera de la página con título, descripción, botón de llamada a la acción y galería de imágenes.",
+    "icon": "landscape",
+    "singularName": "hero-section",
+    "pluralName": "hero-sections"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título principal del hero. Ejemplo: Descubre Puerto Agua Verde."
+    },
+    "titleHighlight": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Parte del título que se resaltará con un color diferente. Debe ser una palabra o frase corta que aparezca en el título."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción breve que aparece debajo del título."
+    },
+    "ctaLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del botón de llamada a la acción. Ejemplo: Explorar lugares."
+    },
+    "ctaLink": {
+      "type": "string",
+      "default": "/sitios",
+      "description": "URL a la que lleva el botón. Ejemplo: /sitios, /experiencias."
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": true,
+      "allowedTypes": ["images"],
+      "description": "Imágenes del carrusel. Se recomienda al menos 3 imágenes en formato 16:9."
+    }
+  }
+}

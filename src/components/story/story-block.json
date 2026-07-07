@@ -1,0 +1,69 @@
+{
+  "collectionName": "components_story_story_blocks",
+  "info": {
+    "displayName": "Bloque de Historia",
+    "description": "Un bloque narrativo temático (origen, oficio, legado). Usado para resaltar las historias humanas detrás de un lugar.",
+    "icon": "book",
+    "singularName": "story-block",
+    "pluralName": "story-blocks"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título del bloque de historia. Ejemplo: El origen de la cooperativa."
+    },
+    "narrative": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto narrativo completo. Acepta formato enriquecido."
+    },
+    "highlightQuote": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Cita destacada en primera persona. Se muestra con estilo especial."
+    },
+    "era": {
+      "type": "string",
+      "description": "Época o año relacionado con la historia. Ejemplo: 1990, Década de 1980, Siglo XIX."
+    },
+    "theme": {
+      "type": "enumeration",
+      "enum": ["origin", "craft", "legacy", "sustainability", "community"],
+      "default": "origin",
+      "description": "Tema de la historia: origen, oficio, legado, sostenibilidad o comunidad."
+    },
+    "storyteller": {
+      "type": "string",
+      "description": "Nombre de la persona que cuenta la historia."
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Imagen ilustrativa del bloque de historia."
+    },
+    "gallery": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Galería de imágenes adicionales para este bloque."
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_contact_contact_infos",
+  "info": {
+    "displayName": "Información de Contacto",
+    "description": "Datos de contacto del lugar (WhatsApp, teléfono, email, redes sociales).",
+    "icon": "phone",
+    "singularName": "contact-info",
+    "pluralName": "contact-infos"
+  },
+  "options": {},
+  "attributes": {
+    "whatsapp": {
+      "type": "string",
+      "description": "Número de WhatsApp con código de país. Ej: +521234567890"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Número de teléfono fijo. Ej: +521234567890"
+    },
+    "email": {
+      "type": "string",
+      "description": "Correo electrónico de contacto."
+    },
+    "website": {
+      "type": "string",
+      "description": "Sitio web (URL completa)."
+    },
+    "instagram": {
+      "type": "string",
+      "description": "Usuario de Instagram sin @."
+    },
+    "facebook": {
+      "type": "string",
+      "description": "Nombre o URL de la página de Facebook."
+    }
+  }
+}

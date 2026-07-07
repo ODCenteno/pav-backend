@@ -4,8 +4,8 @@
   "info": {
     "singularName": "site-content",
     "pluralName": "site-contents",
-    "displayName": "Site Content",
-    "description": "Sectioned content blocks keyed by section name (about-intro, guide-hero, etc.)."
+    "displayName": "Bloque de Contenido",
+    "description": "Bloques de texto organizados por clave de sección (about-intro, guide-hero, etc.). Usados para textos fijos del sitio que no encajan en un lugar o experiencia."
   },
   "options": {
     "draftAndPublish": true
@@ -19,7 +19,8 @@
     "key": {
       "type": "string",
       "required": true,
-      "unique": true
+      "unique": true,
+      "description": "Identificador único de la sección. Ejemplo: about-intro, guide-hero, footer-contact. Solo letras, números y guiones."
     },
     "title": {
       "type": "string",
@@ -27,7 +28,8 @@
         "i18n": {
           "localized": true
         }
-      }
+      },
+      "description": "Título del bloque (referencia interna)."
     },
     "text": {
       "type": "text",
@@ -35,14 +37,17 @@
         "i18n": {
           "localized": true
         }
-      }
+      },
+      "description": "Texto principal del bloque."
     },
     "order": {
       "type": "integer",
-      "default": 0
+      "default": 0,
+      "description": "Orden de aparición cuando el bloque se usa en una lista."
     },
     "extraData": {
-      "type": "json"
+      "type": "json",
+      "description": "Datos adicionales en JSON. La estructura depende de la clave (key) de este bloque. Consulta con el equipo técnico antes de modificar. Ejemplo: para key=guide-directions contiene objetos con label, desc, distance, time, image por origen."
     }
   }
 }

@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "legal_pages",
+  "info": {
+    "singularName": "legal-page",
+    "pluralName": "legal-pages",
+    "displayName": "Página Legal",
+    "description": "Páginas legales como aviso de privacidad y términos de servicio."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true,
+      "description": "Identificador en la URL. Ejemplo: privacy-notice, terms-of-service."
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la página legal. Ejemplo: Aviso de Privacidad."
+    },
+    "content": {
+      "type": "richtext",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Contenido completo de la página legal. Acepta formato enriquecido."
+    }
+  }
+}

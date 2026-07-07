@@ -1,0 +1,43 @@
+{
+  "collectionName": "components_highlight_highlight_cards",
+  "info": {
+    "displayName": "Tarjeta Destacada",
+    "description": "Tarjeta para la sección de destacados (título, descripción, imagen, enlace opcional).",
+    "icon": "star",
+    "singularName": "highlight-card",
+    "pluralName": "highlight-cards"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la tarjeta destacada."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción breve del elemento destacado."
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"],
+      "description": "Imagen principal de la tarjeta."
+    },
+    "link": {
+      "type": "string",
+      "description": "Enlace opcional al que lleva la tarjeta al hacer clic. Ejemplo: /sitios/kayak-bahia"
+    }
+  }
+}

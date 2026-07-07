@@ -1,0 +1,124 @@
+{
+  "kind": "collectionType",
+  "collectionName": "community_members",
+  "info": {
+    "singularName": "community-member",
+    "pluralName": "community-members",
+    "displayName": "Miembro de la Comunidad",
+    "description": "Emprendedor local, artesano o guía detrás de uno o más lugares. Representa el elemento humano del destino."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Nombre completo de la persona."
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true,
+      "description": "Identificador único en la URL. Se genera del nombre."
+    },
+    "role": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Rol u oficio principal. Ejemplo: Guía de kayak, Artesana de palma, Cocinera tradicional."
+    },
+    "locality": {
+      "type": "enumeration",
+      "enum": ["agua-verde", "rancho-san-cosme"],
+      "default": "agua-verde",
+      "description": "Localidad donde vive o trabaja la persona."
+    },
+    "bio": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Biografía completa. Acepta formato enriquecido: negritas, listas, enlaces."
+    },
+    "pullQuote": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Cita destacada que se muestra en la cabecera de la página de la persona. Texto corto en primera persona."
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Fotografía principal de la persona."
+    },
+    "gallery": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Galería de imágenes adicionales (trabajo, entorno, retratos)."
+    },
+    "social": {
+      "type": "component",
+      "repeatable": true,
+      "component": "contact.social-links",
+      "description": "Redes sociales y canales de contacto de la persona."
+    },
+    "phone": {
+      "type": "string",
+      "description": "Número de teléfono principal."
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "Número de WhatsApp con código de país."
+    },
+    "listings": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::listing.listing",
+      "inversedBy": "members",
+      "description": "Lugares asociados a esta persona."
+    },
+    "relatedMembers": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::community-member.community-member",
+      "description": "Otras personas relacionadas (familia, colegas, mentores)."
+    },
+    "legacyNote": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Nota interna sobre el legado o la historia familiar. No se muestra al público."
+    },
+    "isFeatured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marca esta casilla para destacar a la persona en la página."
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Orden de aparición. Los números menores aparecen primero."
+    }
+  }
+}

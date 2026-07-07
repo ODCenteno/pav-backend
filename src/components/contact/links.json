@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_contact_links",
+  "info": {
+    "displayName": "Enlaces de Contacto",
+    "description": "Enlaces y canales de contacto. Usado por organizaciones y miembros del equipo.",
+    "icon": "link",
+    "singularName": "contact-links",
+    "pluralName": "contact-links"
+  },
+  "options": {},
+  "attributes": {
+    "email": {
+      "type": "string",
+      "description": "Correo electrónico de contacto (ej: info@ejemplo.mx)."
+    },
+    "website": {
+      "type": "string",
+      "description": "Sitio web (URL completa, ej: https://ejemplo.mx)."
+    },
+    "instagram": {
+      "type": "string",
+      "description": "Usuario de Instagram sin @ (ej: puerto_agua_verde)."
+    },
+    "facebook": {
+      "type": "string",
+      "description": "Nombre de la página de Facebook."
+    },
+    "linkedin": {
+      "type": "string",
+      "description": "URL del perfil de LinkedIn (ej: https://linkedin.com/in/usuario)."
+    }
+  }
+}

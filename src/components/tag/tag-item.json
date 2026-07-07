@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_tag_tag_items",
+  "info": {
+    "displayName": "Etiqueta",
+    "description": "Etiqueta bilingüe reutilizable (usada para tags, amenidades y listas similares).",
+    "icon": "tag",
+    "singularName": "tag-item",
+    "pluralName": "tag-items"
+  },
+  "options": {},
+  "attributes": {
+    "label_es": {
+      "type": "string",
+      "required": true,
+      "description": "Texto en español. Ejemplo: Aventura, Mar, Familia."
+    },
+    "label_en": {
+      "type": "string",
+      "description": "Texto en inglés. Opcional: si está vacío, se usará el texto en español."
+    }
+  }
+}

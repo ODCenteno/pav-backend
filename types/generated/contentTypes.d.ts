@@ -470,8 +470,8 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
-    description: 'Top-level category for listings (experiences, accommodation, restaurants, services, sites).';
-    displayName: 'Category';
+    description: 'Categor\u00EDa principal para agrupar lugares (experiencias, hospedaje, restaurantes, servicios, sitios).';
+    displayName: 'Categor\u00EDa';
     pluralName: 'categories';
     singularName: 'category';
   };
@@ -524,11 +524,188 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCommunityMemberCommunityMember
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'community_members';
+  info: {
+    description: 'Emprendedor local, artesano o gu\u00EDa detr\u00E1s de uno o m\u00E1s lugares. Representa el elemento humano del destino.';
+    displayName: 'Miembro de la Comunidad';
+    pluralName: 'community-members';
+    singularName: 'community-member';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    bio: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    gallery: Schema.Attribute.Media<'images', true>;
+    isFeatured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    legacyNote: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    listings: Schema.Attribute.Relation<'manyToMany', 'api::listing.listing'>;
+    locale: Schema.Attribute.String;
+    locality: Schema.Attribute.Enumeration<['agua-verde', 'rancho-san-cosme']> &
+      Schema.Attribute.DefaultTo<'agua-verde'>;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::community-member.community-member'
+    >;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    phone: Schema.Attribute.String;
+    photo: Schema.Attribute.Media<'images'>;
+    publishedAt: Schema.Attribute.DateTime;
+    pullQuote: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    relatedMembers: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::community-member.community-member'
+    >;
+    role: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    social: Schema.Attribute.Component<'contact.social-links', true>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    whatsapp: Schema.Attribute.String;
+  };
+}
+
+export interface ApiHomepageHomepage extends Struct.SingleTypeSchema {
+  collectionName: 'homepages';
+  info: {
+    description: 'Contenido de todas las secciones de la p\u00E1gina principal. Solo hay una entrada de este tipo.';
+    displayName: 'P\u00E1gina de Inicio';
+    pluralName: 'homepages';
+    singularName: 'homepage';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    destinations: Schema.Attribute.Component<
+      'destination.destination-story',
+      true
+    >;
+    destinationsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false>;
+    highlights: Schema.Attribute.Component<'highlight.highlight-card', true>;
+    highlightsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    internalLabel: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Homepage'>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::homepage.homepage'
+    >;
+    mapSection: Schema.Attribute.Component<'map.map-section', false>;
+    publishedAt: Schema.Attribute.DateTime;
+    quickFacts: Schema.Attribute.Component<'quickfact.quick-fact', true>;
+    quickFactsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    quickFactsImage1: Schema.Attribute.Media<'images'>;
+    quickFactsImage2: Schema.Attribute.Media<'images'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiLegalPageLegalPage extends Struct.CollectionTypeSchema {
+  collectionName: 'legal_pages';
+  info: {
+    description: 'P\u00E1ginas legales como aviso de privacidad y t\u00E9rminos de servicio.';
+    displayName: 'P\u00E1gina Legal';
+    pluralName: 'legal-pages';
+    singularName: 'legal-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::legal-page.legal-page'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiListingListing extends Struct.CollectionTypeSchema {
   collectionName: 'listings';
   info: {
-    description: 'A point of interest, experience, accommodation, restaurant, or service.';
-    displayName: 'Listing';
+    description: 'Un punto de inter\u00E9s, experiencia, hospedaje, restaurante o servicio tur\u00EDstico.';
+    displayName: 'Lugar o Experiencia';
     pluralName: 'listings';
     singularName: 'listing';
   };
@@ -541,15 +718,9 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    amenities: Schema.Attribute.JSON;
+    amenities: Schema.Attribute.Component<'tag.tag-item', true>;
     category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
-    categoryId: Schema.Attribute.UID &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    contact: Schema.Attribute.JSON;
+    contact: Schema.Attribute.Component<'contact.contact-info', false>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -566,17 +737,41 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::listing.listing'
     >;
-    location: Schema.Attribute.JSON;
+    location: Schema.Attribute.Component<'location.geo-point', false>;
+    locationURL: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 20;
+      }> &
+      Schema.Attribute.DefaultTo<'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14403.163961446739!2d-111.09047551279198!3d25.5120162622849!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x86b155de44ae9997%3A0xe1b49d6494f6ba5c!2s23897%20Puerto%20Agua%20Verde%2C%20B.C.S.!5e0!3m2!1ses!2smx!4v1782002747458!5e2!1ses!2smx'>;
     mainImage: Schema.Attribute.Media<'images'>;
+    members: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::community-member.community-member'
+    >;
     order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     price: Schema.Attribute.String;
+    products: Schema.Attribute.Component<'product.item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
-    recommendations: Schema.Attribute.JSON;
+    recommendations: Schema.Attribute.Component<
+      'recommendation.visit-info',
+      false
+    >;
     relatedListings: Schema.Attribute.Relation<
       'manyToMany',
       'api::listing.listing'
     >;
-    schedule: Schema.Attribute.JSON;
+    schedule: Schema.Attribute.Component<'schedule.hours', false>;
     shortDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -590,7 +785,14 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    tags: Schema.Attribute.JSON;
+    social: Schema.Attribute.Component<'contact.social-links', true>;
+    stories: Schema.Attribute.Component<'story.story-block', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    tags: Schema.Attribute.Component<'tag.tag-item', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -608,8 +810,8 @@ export interface ApiOrganizationOrganization
   extends Struct.CollectionTypeSchema {
   collectionName: 'organizations';
   info: {
-    description: 'Local organizations and partners.';
-    displayName: 'Organization';
+    description: 'Organizaciones locales y aliados del proyecto.';
+    displayName: 'Organizaci\u00F3n';
     pluralName: 'organizations';
     singularName: 'organization';
   };
@@ -632,12 +834,7 @@ export interface ApiOrganizationOrganization
         };
       }> &
       Schema.Attribute.DefaultTo<true>;
-    links: Schema.Attribute.JSON &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
+    links: Schema.Attribute.Component<'contact.links', false>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -664,12 +861,10 @@ export interface ApiOrganizationOrganization
       }> &
       Schema.Attribute.DefaultTo<0>;
     publishedAt: Schema.Attribute.DateTime;
-    shortDescription: Schema.Attribute.JSON &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
+    shortDescription: Schema.Attribute.Component<
+      'common.localized-text',
+      false
+    >;
     type: Schema.Attribute.Enumeration<
       ['community', 'institution', 'partner', 'collective', 'business']
     > &
@@ -688,8 +883,8 @@ export interface ApiOrganizationOrganization
 export interface ApiSiteContentSiteContent extends Struct.CollectionTypeSchema {
   collectionName: 'site_contents';
   info: {
-    description: 'Sectioned content blocks keyed by section name (about-intro, guide-hero, etc.).';
-    displayName: 'Site Content';
+    description: 'Bloques de texto organizados por clave de secci\u00F3n (about-intro, guide-hero, etc.). Usados para textos fijos del sitio que no encajan en un lugar o experiencia.';
+    displayName: 'Bloque de Contenido';
     pluralName: 'site-contents';
     singularName: 'site-content';
   };
@@ -734,35 +929,155 @@ export interface ApiSiteContentSiteContent extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiSiteGlobalSiteGlobal extends Struct.SingleTypeSchema {
+  collectionName: 'site_globals';
+  info: {
+    description: 'Informaci\u00F3n de contacto, redes sociales y metadatos del sitio. Solo hay una entrada de este tipo.';
+    displayName: 'Configuraci\u00F3n Global del Sitio';
+    pluralName: 'site-globals';
+    singularName: 'site-global';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    contactAddress: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    contactEmail: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    contactPhone: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    contactPhoneRaw: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    contactWhatsapp: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::site-global.site-global'
+    >;
+    logoImage: Schema.Attribute.Media<'images'>;
+    logoShortName: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metadataDefaultDescription: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metadataDefaultTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metadataSiteName: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    seoAuthor: Schema.Attribute.String;
+    seoKeywords: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    seoOgImage: Schema.Attribute.Media<'images'>;
+    seoOgUrl: Schema.Attribute.String;
+    seoThemeColor: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'#5A8A80'>;
+    socialFacebook: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    socialGoogleMaps: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    socialInstagram: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiTeamMemberTeamMember extends Struct.CollectionTypeSchema {
   collectionName: 'team_members';
   info: {
-    description: 'People behind the project.';
-    displayName: 'Team Member';
+    description: 'Personas detr\u00E1s del proyecto.';
+    displayName: 'Miembro del Equipo';
     pluralName: 'team-members';
     singularName: 'team-member';
   };
   options: {
     draftAndPublish: true;
   };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     isFeatured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    links: Schema.Attribute.JSON;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    links: Schema.Attribute.Component<'contact.links', false>;
+    locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::team-member.team-member'
-    > &
-      Schema.Attribute.Private;
+    >;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     photo: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
-    role: Schema.Attribute.JSON;
-    shortBio: Schema.Attribute.JSON;
+    role: Schema.Attribute.Component<'common.localized-text', false>;
+    shortBio: Schema.Attribute.Component<'common.localized-text', false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1282,9 +1597,13 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::category.category': ApiCategoryCategory;
+      'api::community-member.community-member': ApiCommunityMemberCommunityMember;
+      'api::homepage.homepage': ApiHomepageHomepage;
+      'api::legal-page.legal-page': ApiLegalPageLegalPage;
       'api::listing.listing': ApiListingListing;
       'api::organization.organization': ApiOrganizationOrganization;
       'api::site-content.site-content': ApiSiteContentSiteContent;
+      'api::site-global.site-global': ApiSiteGlobalSiteGlobal;
       'api::team-member.team-member': ApiTeamMemberTeamMember;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
