@@ -396,9 +396,22 @@ Exact names matching the actual code. Mark sensitive values as **secret** in the
 
 | Key | Example value | Notes |
 |---|---|---|
-| `FRONTEND_URL` | `https://pav-frontend.pixie-cemodan.workers.dev` | For CORS; add custom domain when ready |
+| `FRONTEND_URL` | `https://pav-frontend.pixie-cemodan.workers.dev` | For CORS + invite/reset email links |
 | `WEBHOOK_SECRET` | `hex...` | 🔒 secret; copy to frontend `WEBHOOK_SECRET` env |
 | `STRAPI_TELEMETRY_DISABLED` | `true` | Opt out of Strapi anonymous telemetry |
+
+### Email (Resend SMTP via Nodemailer)
+
+| Key | Example value | Notes |
+|---|---|---|
+| `SMTP_HOST` | `smtp.resend.com` | Resend SMTP relay |
+| `SMTP_PORT` | `465` | TLS |
+| `SMTP_USER` | `resend` | Fixed for Resend |
+| `SMTP_PASS` | `re_xxxxxxxxxxxx` | 🔒 secret — Resend API key |
+| `EMAIL_FROM` | `PAV Notificaciones <no-reply@mail.puertoaguaverde.mx>` | Sender (domain verified in Resend for production) |
+| `EMAIL_REPLY_TO` | `hola@puertoaguaverde.mx` | Reply-to address |
+
+> **Testing without a verified domain**: use `PAV <onboarding@resend.dev>` as `EMAIL_FROM`. Resend allows sending from `@resend.dev` addresses without domain verification. Once `mail.puertoaguaverde.mx` is verified in Resend, switch `EMAIL_FROM` to the mx-prefixed address.
 
 ---
 
@@ -625,6 +638,43 @@ After first successful Koyeb deploy + migration:
 
    Verify no outbound calls to `https://telemetry.strapi.io` in Koyeb logs after startup.
 
+### RBAC — Admin Roles & Owner Role Verification
+
+> See `RBAC-EMAIL-PLAN.md` for the full auth architecture and implementation details.
+
+6. **Verify Owner role seeded** (`RBAC-EMAIL-PLAN.md §11.3`):
+
+   Go to **Settings → Users & Permissions → Roles**. Confirm a role named **Dueño de Negocio** (type `owner`) exists with permissions:
+   - All content types: `find` + `findOne`
+   - `listing`: `update`
+   - `organization`: `update`
+   - `community-member`: `update`
+
+   If missing, the bootstrap failed — restart the Koyeb service to re-run `src/index.ts` bootstrap.
+
+7. **Create Editor role** (for content managers who are not Super Admin):
+
+   **Settings → Users & Permissions → Roles → Create role**:
+   - Name: `Editor`
+   - **Content Permissions**: grant all permissions (find, findOne, create, update, delete) for all content types
+   - **Email**: leave as-is
+   - **Users & Permissions**: grant `user.find` + `user.findOne` (editors need to see the user list to invite owners)
+   - **Do NOT** grant `user.create`, `user.delete`, `role.create`, `role.update`, `role.delete` — only Super Admin manages users
+
+8. **Verify email templates** (`RBAC-EMAIL-PLAN.md §11.4`):
+
+   Go to **Settings → Users & Permissions → Email Templates → Reset password**. Confirm the Spanish subject/body. If blank, restart the Koyeb service (the bootstrap seeds templates on startup in production).
+
+9. **Test invite flow end-to-end**:
+
+   - Create a test owner via **Settings → Users & Permissions → Users → Add new user**
+     - Email: your personal email
+     - Role: **Dueño de Negocio**
+     - Password: any temp value
+   - In the frontend owner portal (`/mi-panel/admin/invitar` — after FRONTEND-DEPLOYMENT.md §new is implemented), enter the test email and submit the invite
+   - Verify the invite email arrives in your inbox with the Spanish "Te han invitado..." subject
+   - Click the link, set a password, confirm you land on `/mi-panel`
+
 ---
 
 ## 11. Previous Research — 19 Issues Fixed
@@ -703,6 +753,11 @@ Run these after the Koyeb deploy is healthy.
 - [ ] CORS preflight: `curl -X OPTIONS -H "Origin: https://pav-frontend.pixie-cemodan.workers.dev" -H "Access-Control-Request-Method: GET" https://<koyeb-url>/api/listings -I` → `Access-Control-Allow-Origin` matches
 - [ ] CSP: Strapi admin console shows no `Refused to load` for R2 images
 - [ ] Telemetry: Koyeb outbound logs show no calls to `telemetry.strapi.io`
+- [ ] Owner role: `GET /api/owners` (as admin) → 200; "Dueño de Negocio" role has update permission on `listing`
+- [ ] Ownership policy: `PUT /api/listings/<own-id>` as Owner JWT → 200; `PUT /api/listings/<other-id>` → 403
+- [ ] Invite email: `POST /api/owners/invite` with test email → email received in inbox (check spam)
+- [ ] Password reset: `POST /api/auth/forgot-password` → email received with Spanish "Restablece tu contraseña"
+- [ ] Email templates: Strapi admin Settings → Email Templates → Reset password shows Spanish subject/body
 
 ---
 
@@ -716,6 +771,8 @@ Run these after the Koyeb deploy is healthy.
 | 4 | Webhook secret drift (backend ≠ frontend) | Low | Store secret in both Koyeb and Workers env; document in ops runbook |
 | 5 | `better-sqlite3` native module breaks alpine image | Low | Runner stage doesn't load it (dev dep); `pg` is pure JS + native SSL via Node |
 | 6 | `pub-*.r2.dev` URL changes (Cloudflare rotates it) | Very Low | Switch `R2_PUBLIC_BASE_URL` to Worker URL (stable) once §6 deployed |
+| 7 | Resend free tier exceeded (3,000 emails/mo) | Very Low | Monitor Resend dashboard; upgrade to paid tier or switch provider |
+| 8 | Owner locked out (no admin to reset) | Low | Super Admin can reset password from Strapi admin panel → Settings → Users → select user → reset password |
 
 ---
 
@@ -723,11 +780,12 @@ Run these after the Koyeb deploy is healthy.
 
 | Document | Scope |
 |---|---|
-| `FRONTEND-DEPLOYMENT.md` | Frontend changes required for the webhook contract: webhook receiver endpoint, cms.ts Cache API upgrade, CSP hardening, SW cache versioning |
+| `RBAC-EMAIL-PLAN.md` | Role-Based Access Control: Owner role, ownership policies, Resend email integration, invite/reset flows, bootstrap seed, seed-owners script |
+| `FRONTEND-DEPLOYMENT.md` | Frontend changes: webhook receiver, cms.ts Cache API upgrade, CSP hardening, SW versioning, **Owner Portal** (login, mi-panel, auth middleware) |
 | `R2-integration-plan.md` | Original R2 integration research and decisions (historical) |
 | `README.md` | Project overview, local dev setup |
 | `.env.example` | All env var names and placeholder values |
 
 ---
 
-*Last updated: 2026-07-07 · pav-backend main branch commit `0a42a0b`*
+*Last updated: 2026-07-08 · aligned with RBAC-EMAIL-PLAN.md · pav-backend main*

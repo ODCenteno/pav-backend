@@ -542,11 +542,263 @@ Add `WEBHOOK_SECRET` to the repository's GitHub Actions secrets.
 
 ## 10. Summary of Changes by File
 
+## 11. Owner Portal — Authenticated Business Owner Dashboard
+
+This section covers the frontend routes and auth middleware for business owners (the "Owner" role from `RBAC-EMAIL-PLAN.md`).
+
+**Architecture:**
+- Owners authenticate via `POST /api/auth/local` → receive JWT
+- JWT stored in **httpOnly cookie** (set by Astro middleware) — more secure than localStorage
+- JWT payload includes `role: "owner"` (injected by `RBAC-EMAIL-PLAN.md §10`)
+- Owner can edit ONLY their own listings, organizations, and community-member profile (enforced by `is-owner` / `is-self` policies on Strapi routes)
+
+### 11.1 New Routes
+
+| Route | File | Purpose | Auth |
+|---|---|---|---|
+| `/iniciar-sesion` | `src/pages/iniciar-sesion.astro` | Login form: email + password | Public |
+| `/recuperar-contrasena` | `src/pages/recuperar-contrasena.astro` | Request password reset email | Public |
+| `/restablecer-contrasena` | `src/pages/restablecer-contrasena.astro` | Set new password (from email link) | Public (token in URL) |
+| `/establecer-contrasena` | `src/pages/establecer-contrasena.astro` | Set initial password (from invite email) | Public (token in URL) |
+| `/mi-panel` | `src/pages/mi-panel/index.astro` | Owner dashboard: list their content | **Owner JWT required** |
+| `/mi-panel/editar/[type]/[id]` | `src/pages/mi-panel/editar/[type]/[id].astro` | Edit own listing/org/member | **Owner JWT + ownership check** |
+
+### 11.2 Auth Middleware
+
+**File:** `src/middleware.ts` — add session/auth block
+
+```typescript
+// src/middleware.ts
+import { defineMiddleware } from 'astro:middleware';
+
+const AUTH_COOKIE = 'pav_owner_token';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+export const onRequest = defineMiddleware(async ({ request, locals, redirect }, next) => {
+  const url = new URL(request.url);
+
+  // ─── Auth cookie → locals ────────────────────────────────────────────
+  const tokenCookie = request.headers
+    .get('cookie')
+    ?.split('; ')
+    .find((c) => c.startsWith(`${AUTH_COOKIE}=`))
+    ?.split('=')[1];
+
+  if (tokenCookie) {
+    try {
+      // Decode base64 JWT (payload only — signature verified by Strapi on each API call)
+      const payload = JSON.parse(atob(tokenCookie.split('.')[1]));
+      locals.user = payload; // { id, email, role, ... }
+    } catch {
+      locals.user = null;
+    }
+  } else {
+    locals.user = null;
+  }
+
+  // ─── Protected routes → redirect to login ─────────────────────────────
+  if (url.pathname.startsWith('/mi-panel')) {
+    if (!locals.user) {
+      return redirect('/iniciar-sesion');
+    }
+  }
+
+  // ─── Login page → redirect to /mi-panel if already logged in ─────────
+  if (url.pathname === '/iniciar-sesion' && locals.user) {
+    return redirect('/mi-panel');
+  }
+
+  return next();
+});
+```
+
+> `locals.user` is available in all Astro pages and API routes via `Astro.locals.user`.
+
+### 11.3 Login Handler
+
+**File:** `src/pages/api/auth/login.ts`
+
+```typescript
+export const prerender = false;
+
+export async function POST({ request }: { request: Request }): Promise<Response> {
+  const { email, password } = await request.json();
+
+  if (!email || !password) {
+    return new Response(JSON.stringify({ error: 'Correo y contraseña son requeridos' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const strapiRes = await fetch(`${import.meta.env.STRAPI_URL}/api/auth/local`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier: email, password }),
+  });
+
+  if (!strapiRes.ok) {
+    return new Response(
+      JSON.stringify({ error: 'Correo o contraseña incorrectos' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const { jwt, user } = await strapiRes.json();
+
+  // Set httpOnly cookie
+  const response = new Response(JSON.stringify({ ok: true, user }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': `${AUTH_COOKIE}=${jwt}; HttpOnly; Secure; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}; Path=/`,
+    },
+  });
+
+  return response;
+}
+```
+
+### 11.4 Forgot Password Handler
+
+**File:** `src/pages/api/auth/forgot-password.ts`
+
+```typescript
+export const prerender = false;
+
+export async function POST({ request }: { request: Request }): Promise<Response> {
+  const { email } = await request.json();
+
+  const strapiRes = await fetch(`${import.meta.env.STRAPI_URL}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  // Always return 200 — don't reveal whether email exists
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+```
+
+### 11.5 Reset Password Handler (from email link)
+
+**File:** `src/pages/api/auth/reset-password.ts`
+
+```typescript
+export const prerender = false;
+
+export async function POST({ request }: { request: Request }): Promise<Response> {
+  const { code, password, passwordConfirmation } = await request.json();
+
+  if (!code || !password || password !== passwordConfirmation) {
+    return new Response(
+      JSON.stringify({ error: 'Código inválido o las contraseñas no coinciden' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const strapiRes = await fetch(`${import.meta.env.STRAPI_URL}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, password, passwordConfirmation }),
+  });
+
+  if (!strapiRes.ok) {
+    return new Response(
+      JSON.stringify({ error: 'No se pudo restablecer la contraseña. El enlace puede haber expirado.' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const { jwt, user } = await strapiRes.json();
+
+  const response = new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': `${AUTH_COOKIE}=${jwt}; HttpOnly; Secure; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}; Path=/`,
+    },
+  });
+
+  return response;
+}
+```
+
+### 11.6 Logout
+
+**File:** `src/pages/api/auth/logout.ts`
+
+```typescript
+export const prerender = false;
+
+export async function GET(): Promise<Response> {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: '/',
+      'Set-Cookie': `${AUTH_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Path=/`,
+    },
+  });
+}
+```
+
+### 11.7 Fetching Owner's Content
+
+In Astro pages and API routes, use the cookie to call Strapi with the owner's JWT:
+
+```typescript
+// src/pages/mi-panel/index.astro
+export async function getStaticPaths() {
+  return [];
+}
+
+const token = Astro.locals.user?.jwt; // from middleware
+
+// Fetch only this owner's content
+const res = await fetch(
+  `${import.meta.env.STRAPI_URL}/api/listings?filters[owner][id][$eq]=${Astro.locals.user.id}&populate=*`,
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+const { data: listings } = await res.json();
+```
+
+### 11.8 CSP — Add Koyeb Backend to Whitelist
+
+**File:** `src/middleware.ts` — update `connect-src`
+
+```typescript
+const CSP_POLICY = [
+  // ...
+  "connect-src 'self' https://*.strapi.io https://*.cloudflare.com https://*.workers.dev https://<koyeb-url> https://assets.<domain>",
+  //                                                                      ^ add this
+];
+```
+
+Replace `<koyeb-url>` with the Koyeb app URL (e.g. `pav-backend-xxx.koyeb.app`). For local dev, use `localhost:1337`.
+
+---
+
+## 12. Updated File Summary
+
 | File | Change | Type |
 |---|---|---|
-| `src/pages/api/revalidate.ts` | Webhook receiver endpoint | **New** |
+| `src/pages/api/revalidate.ts` | Webhook receiver endpoint (cache purge) | **New** |
+| `src/pages/api/auth/login.ts` | Owner login → sets httpOnly JWT cookie | **New** |
+| `src/pages/api/auth/forgot-password.ts` | Request password reset email | **New** |
+| `src/pages/api/auth/reset-password.ts` | Set new password from email link | **New** |
+| `src/pages/api/auth/logout.ts` | Clear auth cookie | **New** |
+| `src/pages/iniciar-sesion.astro` | Login page | **New** |
+| `src/pages/recuperar-contrasena.astro` | Forgot password page | **New** |
+| `src/pages/restablecer-contrasena.astro` | Reset password page | **New** |
+| `src/pages/establecer-contrasena.astro` | Set password from invite | **New** |
+| `src/pages/mi-panel/index.astro` | Owner dashboard | **New** |
+| `src/pages/mi-panel/editar/[type]/[id].astro` | Edit own listing/org/member | **New** |
+| `src/middleware.ts` | Auth cookie → locals; protected route guard; CSP with Koyeb domain | **New/Edit** |
 | `src/lib/cms.ts` | Replace `Map` with Cache API; add `purgeCaches()` | **Edit** |
-| `src/middleware.ts` | Runtime CSP + security headers (replaces `_headers`) | **New** |
+| `src/middleware.ts` | Runtime CSP + security headers (replaces `_headers`) | **Edit** |
 | `astro.config.mjs` | Optionally enable Partytown; add `PUBLIC_SW_VERSION` build hook | **Edit** |
 | `public/sw.js` | Use `self.__SW_VERSION__` instead of hard-coded cache name | **Edit** |
 | `package.json` | Add `lint` script | **Edit** |
@@ -556,4 +808,4 @@ Add `WEBHOOK_SECRET` to the repository's GitHub Actions secrets.
 
 ---
 
-*Reference only — not part of `pav-backend`. Last updated: 2026-07-07.*
+*Reference only — not part of `pav-backend`. Last updated: 2026-07-08 · aligned with RBAC-EMAIL-PLAN.md §11*
