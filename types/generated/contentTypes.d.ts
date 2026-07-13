@@ -467,6 +467,71 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
+  collectionName: 'about_pages';
+  info: {
+    description: "Contenido de la p\u00E1gina 'Acerca de Nosotros': hero, introducci\u00F3n, misi\u00F3n/visi\u00F3n/valores, mensaje comunitario, colaboraci\u00F3n y llamada a la acci\u00F3n final.";
+    displayName: 'P\u00E1gina Acerca de Nosotros';
+    pluralName: 'about-pages';
+    singularName: 'about-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    collaboration: Schema.Attribute.Component<
+      'about.collaboration-block',
+      false
+    >;
+    communityText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    communityTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false>;
+    internalLabel: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'About Page'>;
+    introText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    introTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::about-page.about-page'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    values: Schema.Attribute.Component<'about.values-block', false>;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -594,6 +659,142 @@ export interface ApiCommunityMemberCommunityMember
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     whatsapp: Schema.Attribute.String;
+  };
+}
+
+export interface ApiExperiencesPageExperiencesPage
+  extends Struct.SingleTypeSchema {
+  collectionName: 'experiences_pages';
+  info: {
+    description: "Contenido de la p\u00E1gina de experiencias: hero, encabezado de introducci\u00F3n y CTA. Las tarjetas de experiencias destacadas se obtienen de los listados con categor\u00EDa 'experiences'.";
+    displayName: 'P\u00E1gina de Experiencias';
+    pluralName: 'experiences-pages';
+    singularName: 'experiences-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    featuredHeader: Schema.Attribute.Component<'section.section-header', false>;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false>;
+    internalLabel: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Experiences Page'>;
+    introHeader: Schema.Attribute.Component<'section.section-header', false>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::experiences-page.experiences-page'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiGuidePageGuidePage extends Struct.SingleTypeSchema {
+  collectionName: 'guide_pages';
+  info: {
+    description: 'Contenido completo de la gu\u00EDa del destino: historia, zona de pesca, \u00E1rea protegida, recomendaciones, c\u00F3mo llegar, servicios y mapa tur\u00EDstico.';
+    displayName: 'P\u00E1gina Gu\u00EDa del Destino';
+    pluralName: 'guide-pages';
+    singularName: 'guide-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    amenities: Schema.Attribute.Component<'guide.amenity-item', true>;
+    amenitiesHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    directions: Schema.Attribute.Component<'guide.route-info', true>;
+    directionsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    drivingTips: Schema.Attribute.Component<'guide.text-list-item', true>;
+    drivingTipsHeader: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
+    fishingHeader: Schema.Attribute.Component<'section.section-header', false>;
+    fishingRules: Schema.Attribute.Component<'guide.text-list-item', true>;
+    fishingText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false>;
+    historyHeader: Schema.Attribute.Component<'section.section-header', false>;
+    historyMilestones: Schema.Attribute.Component<'guide.milestone', true>;
+    historyText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    influenceHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    influenceText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    internalLabel: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Guide Page'>;
+    intro: Schema.Attribute.Component<'guide.intro-block', false>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::guide-page.guide-page'
+    >;
+    protectedArea: Schema.Attribute.Component<'guide.protected-link', false>;
+    publishedAt: Schema.Attribute.DateTime;
+    recommendations: Schema.Attribute.Component<'guide.text-list-item', true>;
+    recommendationsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    touristMapCaption: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    touristMapHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    >;
+    touristMapImage: Schema.Attribute.Media<'images'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1596,8 +1797,11 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::about-page.about-page': ApiAboutPageAboutPage;
       'api::category.category': ApiCategoryCategory;
       'api::community-member.community-member': ApiCommunityMemberCommunityMember;
+      'api::experiences-page.experiences-page': ApiExperiencesPageExperiencesPage;
+      'api::guide-page.guide-page': ApiGuidePageGuidePage;
       'api::homepage.homepage': ApiHomepageHomepage;
       'api::legal-page.legal-page': ApiLegalPageLegalPage;
       'api::listing.listing': ApiListingListing;

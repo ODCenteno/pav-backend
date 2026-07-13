@@ -1,0 +1,49 @@
+{
+  "collectionName": "components_guide_protected_links",
+  "info": {
+    "displayName": "Área Natural Protegida",
+    "description": "Información sobre un área natural protegida con enlace externo.",
+    "icon": "leaf",
+    "singularName": "protected-link",
+    "pluralName": "protected-links"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título del área natural protegida."
+    },
+    "text": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción del área."
+    },
+    "linkLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del enlace. Ejemplo: 'Sitio oficial CONANP'."
+    },
+    "linkHref": {
+      "type": "string",
+      "description": "URL externa del organismo. Ejemplo: https://www.gob.mx/conanp."
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "collectionName": "components_about_collaboration_blocks",
+  "info": {
+    "displayName": "Bloque de Colaboración",
+    "description": "Texto de invitación a colaborar con dos botones de llamada a la acción.",
+    "icon": "handshake",
+    "singularName": "collaboration-block",
+    "pluralName": "collaboration-blocks"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título del bloque de colaboración."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción que invita al usuario a participar."
+    },
+    "primaryButtonLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del botón primario. Ejemplo: 'Contáctanos'."
+    },
+    "primaryButtonLink": {
+      "type": "string",
+      "description": "URL del botón primario. Ejemplo: /contacto, mailto:..."
+    },
+    "secondaryButtonLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del botón secundario. Ejemplo: 'Síguenos en Instagram'."
+    },
+    "secondaryButtonLink": {
+      "type": "string",
+      "description": "URL del botón secundario."
+    }
+  }
+}

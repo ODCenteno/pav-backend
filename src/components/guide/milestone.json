@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_guide_milestones",
+  "info": {
+    "displayName": "Hito Histórico",
+    "description": "Un elemento de la línea de tiempo histórica (año + descripción).",
+    "icon": "time",
+    "singularName": "milestone",
+    "pluralName": "milestones"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "year": {
+      "type": "string",
+      "description": "Año del hito. Ejemplo: '1952'."
+    },
+    "text": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción del hito histórico."
+    }
+  }
+}

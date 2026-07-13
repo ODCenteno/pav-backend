@@ -1,0 +1,54 @@
+{
+  "collectionName": "components_guide_intro_blocks",
+  "info": {
+    "displayName": "Introducción Guía — Dos Destinos",
+    "description": "Bloque de introducción con dos destinos: Rancho San Cosme y Puerto Agua Verde.",
+    "icon": "map",
+    "singularName": "intro-block",
+    "pluralName": "intro-blocks"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "ranchTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título para Rancho San Cosme."
+    },
+    "ranchText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción de Rancho San Cosme."
+    },
+    "portTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título para Puerto Agua Verde."
+    },
+    "portText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción de Puerto Agua Verde."
+    }
+  }
+}

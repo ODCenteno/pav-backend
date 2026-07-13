@@ -11,3 +11,6 @@ onlyBuiltDependencies:
   - core-js-pure
   - esbuild
   - sharp
+
+patchedDependencies:
+  '@strapi/admin@5.39.0': patches/@strapi__admin@5.39.0.patch

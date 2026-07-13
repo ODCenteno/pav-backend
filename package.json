@@ -42,5 +42,10 @@
   "strapi": {
     "uuid": "e36ac28d-80d8-4bf4-bf0b-4ddadeb60524",
     "installId": "91920a8d80127cd24e99982097f2e18b34c350c65ec663740edb219a8caa5168"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@strapi/admin@5.39.0": "patches/@strapi__admin@5.39.0.patch"
+    }
   }
 }

@@ -1,0 +1,51 @@
+{
+  "collectionName": "components_guide_route_infos",
+  "info": {
+    "displayName": "Información de Ruta",
+    "description": "Bloque de información de una ruta de llegada (etiqueta, descripción, distancia, tiempo e imagen).",
+    "icon": "road",
+    "singularName": "route-info",
+    "pluralName": "route-infos"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "label": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Etiqueta de la ruta. Ejemplo: 'Desde Loreto' o 'Desde La Paz'."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción de la ruta."
+    },
+    "distance": {
+      "type": "string",
+      "description": "Distancia. Ejemplo: '380 km'."
+    },
+    "time": {
+      "type": "string",
+      "description": "Tiempo estimado. Ejemplo: '5 horas'."
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Imagen o mapa de la ruta."
+    }
+  }
+}

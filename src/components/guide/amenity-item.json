@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_guide_amenity_items",
+  "info": {
+    "displayName": "Servicio para Visitantes",
+    "description": "Un servicio disponible en el área (icono, nombre y descripción).",
+    "icon": "wifi",
+    "singularName": "amenity-item",
+    "pluralName": "amenity-items"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "icon": {
+      "type": "enumeration",
+      "enum": ["wifi", "signal", "toilet", "parking", "water"],
+      "description": "Icono que representa el servicio."
+    },
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Nombre del servicio. Ejemplo: 'Estacionamiento'."
+    },
+    "text": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción del servicio."
+    }
+  }
+}

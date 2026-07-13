@@ -1,0 +1,73 @@
+{
+  "collectionName": "components_about_values_blocks",
+  "info": {
+    "displayName": "Valores — Misión / Visión / Valores",
+    "description": "Bloque de tres columnas: misión, visión y valores de la organización.",
+    "icon": "star",
+    "singularName": "values-block",
+    "pluralName": "values-blocks"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "missionTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la misión."
+    },
+    "missionText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto de la misión."
+    },
+    "visionTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la visión."
+    },
+    "visionText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto de la visión."
+    },
+    "valuesTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la sección de valores."
+    },
+    "valuesItems": {
+      "type": "text",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Lista de valores de la organización (uno por entrada)."
+    }
+  }
+}

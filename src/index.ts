@@ -17,6 +17,9 @@ const PUBLIC_PERMISSIONS = [
   'api::legal-page.legal-page.findOne',
   'api::site-global.site-global.find',
   'api::homepage.homepage.find',
+  'api::experiences-page.experiences-page.find',
+  'api::about-page.about-page.find',
+  'api::guide-page.guide-page.find',
 ];
 
 export default {

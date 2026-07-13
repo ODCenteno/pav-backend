@@ -1,5 +1,103 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface AboutCollaborationBlock extends Struct.ComponentSchema {
+  collectionName: 'components_about_collaboration_blocks';
+  info: {
+    description: 'Texto de invitaci\u00F3n a colaborar con dos botones de llamada a la acci\u00F3n.';
+    displayName: 'Bloque de Colaboraci\u00F3n';
+    icon: 'handshake';
+    pluralName: 'collaboration-blocks';
+    singularName: 'collaboration-block';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    primaryButtonLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    primaryButtonLink: Schema.Attribute.String;
+    secondaryButtonLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    secondaryButtonLink: Schema.Attribute.String;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface AboutValuesBlock extends Struct.ComponentSchema {
+  collectionName: 'components_about_values_blocks';
+  info: {
+    description: 'Bloque de tres columnas: misi\u00F3n, visi\u00F3n y valores de la organizaci\u00F3n.';
+    displayName: 'Valores \u2014 Misi\u00F3n / Visi\u00F3n / Valores';
+    icon: 'star';
+    pluralName: 'values-blocks';
+    singularName: 'values-block';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    missionText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    missionTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    valuesItems: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    valuesTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visionText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visionTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
 export interface CommonLocalizedText extends Struct.ComponentSchema {
   collectionName: 'components_common_localized_texts';
   info: {
@@ -124,6 +222,200 @@ export interface DestinationDestinationStory extends Struct.ComponentSchema {
       }>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface GuideAmenityItem extends Struct.ComponentSchema {
+  collectionName: 'components_guide_amenity_items';
+  info: {
+    description: 'Un servicio disponible en el \u00E1rea (icono, nombre y descripci\u00F3n).';
+    displayName: 'Servicio para Visitantes';
+    icon: 'wifi';
+    pluralName: 'amenity-items';
+    singularName: 'amenity-item';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    icon: Schema.Attribute.Enumeration<
+      ['wifi', 'signal', 'toilet', 'parking', 'water']
+    >;
+    text: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface GuideIntroBlock extends Struct.ComponentSchema {
+  collectionName: 'components_guide_intro_blocks';
+  info: {
+    description: 'Bloque de introducci\u00F3n con dos destinos: Rancho San Cosme y Puerto Agua Verde.';
+    displayName: 'Introducci\u00F3n Gu\u00EDa \u2014 Dos Destinos';
+    icon: 'map';
+    pluralName: 'intro-blocks';
+    singularName: 'intro-block';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    portText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    portTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ranchText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ranchTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface GuideMilestone extends Struct.ComponentSchema {
+  collectionName: 'components_guide_milestones';
+  info: {
+    description: 'Un elemento de la l\u00EDnea de tiempo hist\u00F3rica (a\u00F1o + descripci\u00F3n).';
+    displayName: 'Hito Hist\u00F3rico';
+    icon: 'time';
+    pluralName: 'milestones';
+    singularName: 'milestone';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    text: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    year: Schema.Attribute.String;
+  };
+}
+
+export interface GuideProtectedLink extends Struct.ComponentSchema {
+  collectionName: 'components_guide_protected_links';
+  info: {
+    description: 'Informaci\u00F3n sobre un \u00E1rea natural protegida con enlace externo.';
+    displayName: '\u00C1rea Natural Protegida';
+    icon: 'leaf';
+    pluralName: 'protected-links';
+    singularName: 'protected-link';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    linkHref: Schema.Attribute.String;
+    linkLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    text: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface GuideRouteInfo extends Struct.ComponentSchema {
+  collectionName: 'components_guide_route_infos';
+  info: {
+    description: 'Bloque de informaci\u00F3n de una ruta de llegada (etiqueta, descripci\u00F3n, distancia, tiempo e imagen).';
+    displayName: 'Informaci\u00F3n de Ruta';
+    icon: 'road';
+    pluralName: 'route-infos';
+    singularName: 'route-info';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    distance: Schema.Attribute.String;
+    image: Schema.Attribute.Media<'images'>;
+    label: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    time: Schema.Attribute.String;
+  };
+}
+
+export interface GuideTextListItem extends Struct.ComponentSchema {
+  collectionName: 'components_guide_text_list_items';
+  info: {
+    description: 'Elemento gen\u00E9rico de texto repetible para reglas, recomendaciones y consejos.';
+    displayName: 'Elemento de Lista de Texto';
+    icon: 'list';
+    pluralName: 'text-list-items';
+    singularName: 'text-list-item';
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    text: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -434,12 +726,20 @@ export interface TagTagItem extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'about.collaboration-block': AboutCollaborationBlock;
+      'about.values-block': AboutValuesBlock;
       'common.localized-text': CommonLocalizedText;
       'contact.contact-info': ContactContactInfo;
       'contact.links': ContactLinks;
       'contact.social-links': ContactSocialLinks;
       'cta.cta-section': CtaCtaSection;
       'destination.destination-story': DestinationDestinationStory;
+      'guide.amenity-item': GuideAmenityItem;
+      'guide.intro-block': GuideIntroBlock;
+      'guide.milestone': GuideMilestone;
+      'guide.protected-link': GuideProtectedLink;
+      'guide.route-info': GuideRouteInfo;
+      'guide.text-list-item': GuideTextListItem;
       'hero.hero-section': HeroHeroSection;
       'highlight.highlight-card': HighlightHighlightCard;
       'location.geo-point': LocationGeoPoint;

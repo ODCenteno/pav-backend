@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_guide_text_list_items",
+  "info": {
+    "displayName": "Elemento de Lista de Texto",
+    "description": "Elemento genérico de texto repetible para reglas, recomendaciones y consejos.",
+    "icon": "list",
+    "singularName": "text-list-item",
+    "pluralName": "text-list-items"
+  },
+  "options": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "text": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del elemento."
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "kind": "singleType",
+  "collectionName": "about_pages",
+  "info": {
+    "singularName": "about-page",
+    "pluralName": "about-pages",
+    "displayName": "Página Acerca de Nosotros",
+    "description": "Contenido de la página 'Acerca de Nosotros': hero, introducción, misión/visión/valores, mensaje comunitario, colaboración y llamada a la acción final."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "internalLabel": {
+      "type": "string",
+      "default": "About Page",
+      "description": "Etiqueta interna para identificar esta entrada en la lista de borradores."
+    },
+    "hero": {
+      "type": "component",
+      "component": "hero.hero-section",
+      "repeatable": false,
+      "description": "Imagen de impacto y título de la página."
+    },
+    "introTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la introducción."
+    },
+    "introText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto narrativo del proyecto."
+    },
+    "values": {
+      "type": "component",
+      "component": "about.values-block",
+      "repeatable": false,
+      "description": "Bloque de misión, visión y valores."
+    },
+    "communityTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título del mensaje comunitario."
+    },
+    "communityText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Mensaje de agradecimiento a la comunidad."
+    },
+    "collaboration": {
+      "type": "component",
+      "component": "about.collaboration-block",
+      "repeatable": false,
+      "description": "Bloque de invitación a colaborar con dos botones."
+    },
+    "finalCta": {
+      "type": "component",
+      "component": "cta.cta-section",
+      "repeatable": false,
+      "description": "Llamada a la acción final de la página."
+    }
+  }
+}
