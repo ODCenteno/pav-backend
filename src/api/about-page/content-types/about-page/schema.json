@@ -25,6 +25,11 @@
       "type": "component",
       "component": "hero.hero-section",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Imagen de impacto y título de la página."
     },
     "introTitle": {
@@ -49,6 +54,11 @@
       "type": "component",
       "component": "about.values-block",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Bloque de misión, visión y valores."
     },
     "communityTitle": {
@@ -73,12 +83,22 @@
       "type": "component",
       "component": "about.collaboration-block",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Bloque de invitación a colaborar con dos botones."
     },
     "finalCta": {
       "type": "component",
       "component": "cta.cta-section",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Llamada a la acción final de la página."
     }
   }

@@ -98,36 +98,66 @@
       "type": "component",
       "repeatable": true,
       "component": "tag.tag-item",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Etiquetas para búsqueda y filtros. Agrega una etiqueta por elemento."
     },
     "contact": {
       "type": "component",
       "repeatable": false,
       "component": "contact.contact-info",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Información de contacto del lugar (WhatsApp, teléfono, email, redes sociales)."
     },
     "location": {
       "type": "component",
       "repeatable": false,
       "component": "location.geo-point",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Ubicación geográfica del lugar con coordenadas GPS y nombre bilingüe."
     },
     "schedule": {
       "type": "component",
       "repeatable": false,
       "component": "schedule.hours",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Horario de atención al público."
     },
     "amenities": {
       "type": "component",
       "repeatable": true,
       "component": "tag.tag-item",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Servicios e incluyos disponibles para el visitante. Agrega un servicio por elemento."
     },
     "recommendations": {
       "type": "component",
       "repeatable": false,
       "component": "recommendation.visit-info",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Recomendaciones para visitantes: mejor época, qué llevar, accesibilidad y conectividad."
     },
     "relatedListings": {
@@ -169,19 +199,12 @@
       "type": "component",
       "repeatable": true,
       "component": "contact.social-links",
-      "description": "Redes sociales y canales de contacto del lugar."
-    },
-    "locationURL": {
-      "type": "string",
       "pluginOptions": {
         "i18n": {
-          "localized": false
+          "localized": true
         }
       },
-      "default": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14403.163961446739!2d-111.09047551279198!3d25.5120162622849!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x86b155de44ae9997%3A0xe1b49d6494f6ba5c!2s23897%20Puerto%20Agua%20Verde%2C%20B.C.S.!5e0!3m2!1ses!2smx!4v1782002747458!5e2!1ses!2smx",
-      "minLength": 20,
-      "required": true,
-      "description": "URL del iframe de Google Maps. Para obtenerla: abre Google Maps, haz clic en Compartir → Insertar un mapa, y copia la URL del src del iframe."
+      "description": "Redes sociales y canales de contacto del lugar."
     }
   }
 }

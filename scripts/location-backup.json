@@ -1,0 +1,218 @@
+[
+  {
+    "id": 47,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Pesca saliendo del muelle principal",
+    "name_en": "Fishing experience",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 48,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Pesca saliendo del muelle principal",
+    "name_en": "Fishing experience",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 51,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Kayak al Amanecer",
+    "name_en": "Sunrise Kayaking",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 52,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Kayak al Amanecer",
+    "name_en": "Sunrise Kayaking",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 55,
+    "lat": 25.5,
+    "lng": -111.04,
+    "name_es": "Playa Agua Verde",
+    "name_en": "Agua Verde Beach",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 56,
+    "lat": 25.5,
+    "lng": -111.04,
+    "name_es": "Playa Agua Verde",
+    "name_en": "Agua Verde Beach",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 59,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Pesca saliendo del muelle principal",
+    "name_en": "Fishing experience",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 60,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Pesca saliendo del muelle principal",
+    "name_en": "Fishing experience",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 63,
+    "lat": 25.5123,
+    "lng": -111.0456,
+    "name_es": "Muelle de Puerto Agua Verde",
+    "name_en": "Puerto Agua Verde Pier",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 64,
+    "lat": 25.5123,
+    "lng": -111.0456,
+    "name_es": "Muelle de Puerto Agua Verde",
+    "name_en": "Puerto Agua Verde Pier",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 67,
+    "lat": 25.5123,
+    "lng": -111.0456,
+    "name_es": "Muelle de Puerto Agua Verde",
+    "name_en": "Puerto Agua Verde Pier",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 68,
+    "lat": 25.5123,
+    "lng": -111.0456,
+    "name_es": "Muelle de Puerto Agua Verde",
+    "name_en": "Puerto Agua Verde Pier",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 71,
+    "lat": 25.5,
+    "lng": -111.04,
+    "name_es": "Playa Agua Verde",
+    "name_en": "Agua Verde Beach",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 72,
+    "lat": 25.5,
+    "lng": -111.04,
+    "name_es": "Playa Agua Verde",
+    "name_en": "Agua Verde Beach",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 75,
+    "lat": 25.513,
+    "lng": -111.063,
+    "name_es": "",
+    "name_en": "",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 76,
+    "lat": 25.513,
+    "lng": -111.063,
+    "name_es": "",
+    "name_en": "",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 79,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Inicio de sendero Cerro Blanco",
+    "name_en": "White Hill Trailhead",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 80,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Inicio de sendero Cerro Blanco",
+    "name_en": "White Hill Trailhead",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 83,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Kayak al Amanecer",
+    "name_en": "Sunrise Kayaking",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 84,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Kayak al Amanecer",
+    "name_en": "Sunrise Kayaking",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 87,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Inicio de sendero Cerro Blanco",
+    "name_en": "White Hill Trailhead",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 88,
+    "lat": 25.52,
+    "lng": -111.05,
+    "name_es": "Inicio de sendero Cerro Blanco",
+    "name_en": "White Hill Trailhead",
+    "locality": "",
+    "googleMapsUrl": ""
+  },
+  {
+    "id": 89,
+    "lat": 24.19,
+    "lng": -11034,
+    "name_es": "",
+    "name_en": "",
+    "locality": "agua-verde",
+    "googleMapsUrl": "https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3595.8157443392265!2d-111.03515592464626!3d25.677401977404944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMjXCsDQwJzM4LjciTiAxMTHCsDAxJzU3LjMiVw!5e0!3m2!1ses!2smx!4v1783886248189!5m2!1ses!2smx"
+  },
+  {
+    "id": 91,
+    "lat": 24.19,
+    "lng": -11034,
+    "name_es": "",
+    "name_en": "",
+    "locality": "agua-verde",
+    "googleMapsUrl": "https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3595.8157443392265!2d-111.03515592464626!3d25.677401977404944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMjXCsDQwJzM4LjciTiAxMTHCsDAxJzU3LjMiVw!5e0!3m2!1ses!2smx!4v1783886248189!5m2!1ses!2smx"
+  }
+]

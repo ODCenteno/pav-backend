@@ -25,12 +25,22 @@
       "type": "component",
       "repeatable": false,
       "component": "common.localized-text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Cargo o rol de la persona dentro del proyecto."
     },
     "shortBio": {
       "type": "component",
       "repeatable": false,
       "component": "common.localized-text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Biografía breve en español e inglés."
     },
     "photo": {
@@ -46,6 +56,11 @@
       "type": "component",
       "repeatable": false,
       "component": "contact.links",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Enlaces y redes sociales de la persona."
     },
     "order": {

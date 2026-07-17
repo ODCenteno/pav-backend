@@ -25,24 +25,44 @@
       "type": "component",
       "component": "hero.hero-section",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Hero principal de la guía del destino."
     },
     "intro": {
       "type": "component",
       "component": "guide.intro-block",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Introducción a los dos destinos: Rancho San Cosme y Puerto Agua Verde."
     },
     "historyHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Encabezado de la sección de historia."
     },
     "historyMilestones": {
       "type": "component",
       "component": "guide.milestone",
       "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Línea de tiempo de hitos históricos."
     },
     "historyText": {
@@ -58,6 +78,11 @@
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Encabezado de la sección de zona de refugio pesquero."
     },
     "fishingText": {
@@ -73,18 +98,33 @@
       "type": "component",
       "component": "guide.text-list-item",
       "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Lista de reglas de la zona de refugio pesquero."
     },
     "protectedArea": {
       "type": "component",
       "component": "guide.protected-link",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Información del área natural protegida con enlace externo."
     },
     "influenceHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Encabezado del área de influencia."
     },
     "influenceText": {
@@ -100,24 +140,44 @@
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Encabezado de la sección de recomendaciones."
     },
     "recommendations": {
       "type": "component",
       "component": "guide.text-list-item",
       "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Lista de recomendaciones para visitantes."
     },
     "directionsHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Encabezado de la sección de cómo llegar."
     },
     "directions": {
       "type": "component",
       "component": "guide.route-info",
       "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Rutas de llegada (Loreto, La Paz y otras)."
     },
     "drivingTipsHeader": {
@@ -133,24 +193,44 @@
       "type": "component",
       "component": "guide.text-list-item",
       "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Consejos para manejar en la zona."
     },
     "amenitiesHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Encabezado de la sección de servicios."
     },
     "amenities": {
       "type": "component",
       "component": "guide.amenity-item",
       "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Lista de servicios disponibles para visitantes."
     },
     "touristMapHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Encabezado del mapa turístico."
     },
     "touristMapImage": {
@@ -173,6 +253,11 @@
       "type": "component",
       "component": "cta.cta-section",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Llamada a la acción final de la guía."
     }
   }

@@ -27,6 +27,7 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",
+    "sbp-google-map-field": "^1.1.1",
     "styled-components": "^6.0.0"
   },
   "devDependencies": {
@@ -45,7 +46,8 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "@strapi/admin@5.39.0": "patches/@strapi__admin@5.39.0.patch"
+      "@strapi/admin@5.39.0": "patches/@strapi__admin@5.39.0.patch",
+      "sbp-google-map-field@1.1.1": "patches/sbp-google-map-field@1.1.1.patch"
     }
   }
 }

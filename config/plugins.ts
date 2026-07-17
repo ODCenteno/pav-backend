@@ -37,6 +37,12 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       },
     },
   },
+  'sbp-google-map-field': {
+    enabled: true,
+    config: {
+      apiKey: env('GOOGLE_MAPS_API_KEY'),
+    },
+  },
 });
 
 export default config;

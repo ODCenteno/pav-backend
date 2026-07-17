@@ -9,11 +9,6 @@
   },
   "options": {},
   "attributes": {
-    "isAlwaysOpen": {
-      "type": "boolean",
-      "default": false,
-      "description": "Marca esta casilla si el lugar está abierto las 24 horas del día, los 7 días de la semana."
-    },
     "text_es": {
       "type": "text",
       "description": "Horario en español. Ejemplo: Lunes a viernes, 8:00 AM - 5:00 PM. Sábados 9:00 AM - 2:00 PM."

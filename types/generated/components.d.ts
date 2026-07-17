@@ -127,7 +127,6 @@ export interface ContactContactInfo extends Struct.ComponentSchema {
     facebook: Schema.Attribute.String;
     instagram: Schema.Attribute.String;
     phone: Schema.Attribute.String;
-    website: Schema.Attribute.String;
     whatsapp: Schema.Attribute.String;
   };
 }
@@ -495,20 +494,16 @@ export interface HighlightHighlightCard extends Struct.ComponentSchema {
 export interface LocationGeoPoint extends Struct.ComponentSchema {
   collectionName: 'components_location_geo_points';
   info: {
-    description: 'Coordenadas GPS y nombre del lugar con soporte biling\u00FCe.';
+    description: 'Coordenadas GPS del lugar. Usa el mapa interactivo para seleccionar la ubicaci\u00F3n.';
     displayName: 'Ubicaci\u00F3n Geogr\u00E1fica';
     icon: 'map-marker';
     pluralName: 'geo-points';
     singularName: 'geo-point';
   };
   attributes: {
-    googleMapsUrl: Schema.Attribute.String;
-    lat: Schema.Attribute.Float & Schema.Attribute.Required;
-    lng: Schema.Attribute.Float & Schema.Attribute.Required;
-    locality: Schema.Attribute.Enumeration<['agua-verde', 'rancho-san-cosme']> &
-      Schema.Attribute.DefaultTo<'agua-verde'>;
-    name_en: Schema.Attribute.String;
-    name_es: Schema.Attribute.String;
+    geoPoint: Schema.Attribute.JSON &
+      Schema.Attribute.Required &
+      Schema.Attribute.CustomField<'plugin::sbp-google-map-field.googleMap'>;
   };
 }
 
@@ -636,7 +631,6 @@ export interface ScheduleHours extends Struct.ComponentSchema {
     singularName: 'hours';
   };
   attributes: {
-    isAlwaysOpen: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     text_en: Schema.Attribute.Text;
     text_es: Schema.Attribute.Text;
   };

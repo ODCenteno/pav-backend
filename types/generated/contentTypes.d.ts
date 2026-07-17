@@ -487,7 +487,12 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
     collaboration: Schema.Attribute.Component<
       'about.collaboration-block',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     communityText: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -503,8 +508,18 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
-    hero: Schema.Attribute.Component<'hero.hero-section', false>;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     internalLabel: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'About Page'>;
     introText: Schema.Attribute.Text &
@@ -528,7 +543,12 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    values: Schema.Attribute.Component<'about.values-block', false>;
+    values: Schema.Attribute.Component<'about.values-block', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
   };
 }
 
@@ -553,14 +573,6 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    icon: Schema.Attribute.String & Schema.Attribute.DefaultTo<'location'>;
-    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     listings: Schema.Attribute.Relation<'oneToMany', 'api::listing.listing'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
@@ -654,7 +666,12 @@ export interface ApiCommunityMemberCommunityMember
         };
       }>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
-    social: Schema.Attribute.Component<'contact.social-links', true>;
+    social: Schema.Attribute.Component<'contact.social-links', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -666,7 +683,7 @@ export interface ApiExperiencesPageExperiencesPage
   extends Struct.SingleTypeSchema {
   collectionName: 'experiences_pages';
   info: {
-    description: "Contenido de la p\u00E1gina de experiencias: hero, encabezado de introducci\u00F3n y CTA. Las tarjetas de experiencias destacadas se obtienen de los listados con categor\u00EDa 'experiences'.";
+    description: "Contenido de la p\u00E1gina de experiencias: hero, encabezado de introducci\u00F3n, encabezado de experiencias destacadas y CTA final. Las tarjetas de experiencias destacadas se obtienen autom\u00E1ticamente de los listados con categor\u00EDa 'experiences'.";
     displayName: 'P\u00E1gina de Experiencias';
     pluralName: 'experiences-pages';
     singularName: 'experiences-page';
@@ -718,38 +735,93 @@ export interface ApiGuidePageGuidePage extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
-    amenities: Schema.Attribute.Component<'guide.amenity-item', true>;
+    amenities: Schema.Attribute.Component<'guide.amenity-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     amenitiesHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    directions: Schema.Attribute.Component<'guide.route-info', true>;
+    directions: Schema.Attribute.Component<'guide.route-info', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     directionsHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
-    drivingTips: Schema.Attribute.Component<'guide.text-list-item', true>;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    drivingTips: Schema.Attribute.Component<'guide.text-list-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     drivingTipsHeader: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
-    fishingHeader: Schema.Attribute.Component<'section.section-header', false>;
-    fishingRules: Schema.Attribute.Component<'guide.text-list-item', true>;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    fishingHeader: Schema.Attribute.Component<'section.section-header', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    fishingRules: Schema.Attribute.Component<'guide.text-list-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     fishingText: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    hero: Schema.Attribute.Component<'hero.hero-section', false>;
-    historyHeader: Schema.Attribute.Component<'section.section-header', false>;
-    historyMilestones: Schema.Attribute.Component<'guide.milestone', true>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    historyHeader: Schema.Attribute.Component<'section.section-header', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    historyMilestones: Schema.Attribute.Component<'guide.milestone', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     historyText: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -759,7 +831,12 @@ export interface ApiGuidePageGuidePage extends Struct.SingleTypeSchema {
     influenceHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     influenceText: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -768,19 +845,39 @@ export interface ApiGuidePageGuidePage extends Struct.SingleTypeSchema {
       }>;
     internalLabel: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Guide Page'>;
-    intro: Schema.Attribute.Component<'guide.intro-block', false>;
+    intro: Schema.Attribute.Component<'guide.intro-block', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::guide-page.guide-page'
     >;
-    protectedArea: Schema.Attribute.Component<'guide.protected-link', false>;
+    protectedArea: Schema.Attribute.Component<'guide.protected-link', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
-    recommendations: Schema.Attribute.Component<'guide.text-list-item', true>;
+    recommendations: Schema.Attribute.Component<'guide.text-list-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     recommendationsHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     touristMapCaption: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -790,7 +887,12 @@ export interface ApiGuidePageGuidePage extends Struct.SingleTypeSchema {
     touristMapHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     touristMapImage: Schema.Attribute.Media<'images'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -821,18 +923,48 @@ export interface ApiHomepageHomepage extends Struct.SingleTypeSchema {
     destinations: Schema.Attribute.Component<
       'destination.destination-story',
       true
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     destinationsHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
-    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
-    hero: Schema.Attribute.Component<'hero.hero-section', false>;
-    highlights: Schema.Attribute.Component<'highlight.highlight-card', true>;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    highlights: Schema.Attribute.Component<'highlight.highlight-card', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     highlightsHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     internalLabel: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Homepage'>;
     locale: Schema.Attribute.String;
@@ -840,13 +972,28 @@ export interface ApiHomepageHomepage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::homepage.homepage'
     >;
-    mapSection: Schema.Attribute.Component<'map.map-section', false>;
+    mapSection: Schema.Attribute.Component<'map.map-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
-    quickFacts: Schema.Attribute.Component<'quickfact.quick-fact', true>;
+    quickFacts: Schema.Attribute.Component<'quickfact.quick-fact', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     quickFactsHeader: Schema.Attribute.Component<
       'section.section-header',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     quickFactsImage1: Schema.Attribute.Media<'images'>;
     quickFactsImage2: Schema.Attribute.Media<'images'>;
     updatedAt: Schema.Attribute.DateTime;
@@ -919,9 +1066,19 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    amenities: Schema.Attribute.Component<'tag.tag-item', true>;
+    amenities: Schema.Attribute.Component<'tag.tag-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
-    contact: Schema.Attribute.Component<'contact.contact-info', false>;
+    contact: Schema.Attribute.Component<'contact.contact-info', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -938,18 +1095,12 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::listing.listing'
     >;
-    location: Schema.Attribute.Component<'location.geo-point', false>;
-    locationURL: Schema.Attribute.String &
-      Schema.Attribute.Required &
+    location: Schema.Attribute.Component<'location.geo-point', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: false;
+          localized: true;
         };
-      }> &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 20;
-      }> &
-      Schema.Attribute.DefaultTo<'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14403.163961446739!2d-111.09047551279198!3d25.5120162622849!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x86b155de44ae9997%3A0xe1b49d6494f6ba5c!2s23897%20Puerto%20Agua%20Verde%2C%20B.C.S.!5e0!3m2!1ses!2smx!4v1782002747458!5e2!1ses!2smx'>;
+      }>;
     mainImage: Schema.Attribute.Media<'images'>;
     members: Schema.Attribute.Relation<
       'manyToMany',
@@ -967,12 +1118,22 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
     recommendations: Schema.Attribute.Component<
       'recommendation.visit-info',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     relatedListings: Schema.Attribute.Relation<
       'manyToMany',
       'api::listing.listing'
     >;
-    schedule: Schema.Attribute.Component<'schedule.hours', false>;
+    schedule: Schema.Attribute.Component<'schedule.hours', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     shortDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -986,14 +1147,24 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    social: Schema.Attribute.Component<'contact.social-links', true>;
+    social: Schema.Attribute.Component<'contact.social-links', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     stories: Schema.Attribute.Component<'story.story-block', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    tags: Schema.Attribute.Component<'tag.tag-item', true>;
+    tags: Schema.Attribute.Component<'tag.tag-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -1035,7 +1206,12 @@ export interface ApiOrganizationOrganization
         };
       }> &
       Schema.Attribute.DefaultTo<true>;
-    links: Schema.Attribute.Component<'contact.links', false>;
+    links: Schema.Attribute.Component<'contact.links', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1065,7 +1241,12 @@ export interface ApiOrganizationOrganization
     shortDescription: Schema.Attribute.Component<
       'common.localized-text',
       false
-    >;
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     type: Schema.Attribute.Enumeration<
       ['community', 'institution', 'partner', 'collective', 'business']
     > &
@@ -1267,7 +1448,12 @@ export interface ApiTeamMemberTeamMember extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     isFeatured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    links: Schema.Attribute.Component<'contact.links', false>;
+    links: Schema.Attribute.Component<'contact.links', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1277,8 +1463,18 @@ export interface ApiTeamMemberTeamMember extends Struct.CollectionTypeSchema {
     order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     photo: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
-    role: Schema.Attribute.Component<'common.localized-text', false>;
-    shortBio: Schema.Attribute.Component<'common.localized-text', false>;
+    role: Schema.Attribute.Component<'common.localized-text', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    shortBio: Schema.Attribute.Component<'common.localized-text', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

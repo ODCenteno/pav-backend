@@ -5,7 +5,7 @@
     "singularName": "experiences-page",
     "pluralName": "experiences-pages",
     "displayName": "Página de Experiencias",
-    "description": "Contenido de la página de experiencias: hero, encabezado de introducción y CTA. Las tarjetas de experiencias destacadas se obtienen de los listados con categoría 'experiences'."
+    "description": "Contenido de la página de experiencias: hero, encabezado de introducción, encabezado de experiencias destacadas y CTA final. Las tarjetas de experiencias destacadas se obtienen automáticamente de los listados con categoría 'experiences'."
   },
   "options": {
     "draftAndPublish": true
@@ -25,25 +25,25 @@
       "type": "component",
       "component": "hero.hero-section",
       "repeatable": false,
-      "description": "Carrusel principal de la página de experiencias."
+      "description": "Imagen de fondo con título y descripción que aparece en la cabecera de la página."
     },
     "introHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
-      "description": "Encabezado de la sección de introducción."
+      "description": "Título y subtítulo de la introducción que aparece debajo de la imagen principal."
     },
     "featuredHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
-      "description": "Encabezado de la sección de experiencias destacadas."
+      "description": "Título y subtítulo que encabezan la sección de experiencias destacadas."
     },
     "finalCta": {
       "type": "component",
       "component": "cta.cta-section",
       "repeatable": false,
-      "description": "Llamada a la acción final de la página."
+      "description": "Sección final con título, descripción y botón que invita al visitante a realizar una acción."
     }
   }
 }

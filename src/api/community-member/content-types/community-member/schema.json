@@ -78,6 +78,11 @@
       "type": "component",
       "repeatable": true,
       "component": "contact.social-links",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Redes sociales y canales de contacto de la persona."
     },
     "phone": {

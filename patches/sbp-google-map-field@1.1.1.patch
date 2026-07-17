@@ -1,0 +1,31 @@
+diff --git a/dist/_chunks/GoogleMapInput-82adRQ2s.js b/dist/_chunks/GoogleMapInput-82adRQ2s.js
+index abc1234..def5678 100644
+--- a/dist/_chunks/GoogleMapInput-82adRQ2s.js
++++ b/dist/_chunks/GoogleMapInput-82adRQ2s.js
+@@ -35,7 +35,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
+         zoom
+       });
+-      const marker = new window.google.maps.Marker({
++      const marker = new window.google.maps.marker.AdvancedMarkerElement({
+         position: { lat, lng },
+         map: mapInstance.current,
+         draggable: true
+@@ -43,7 +43,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
+       });
+       markerRef.current = marker;
+-      marker.addListener("dragend", (e) => {
++      marker.addEventListener("dragend", (e) => {
+         const newLat = e.latLng.lat();
+         const newLng = e.latLng.lng();
+         setLat(newLat);
+@@ -55,7 +55,9 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
+   }, [apiKey]);
+   react.useEffect(() => {
+     if (mapInstance.current) {
+       mapInstance.current.panTo({ lat, lng });
+-      markerRef.current.setPosition({ lat, lng });
++      if (markerRef.current) {
++        markerRef.current.position = { lat, lng };
++      }
+     }
+   }, [lat, lng]);

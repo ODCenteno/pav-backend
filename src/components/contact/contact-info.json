@@ -21,10 +21,6 @@
       "type": "string",
       "description": "Correo electrónico de contacto."
     },
-    "website": {
-      "type": "string",
-      "description": "Sitio web (URL completa)."
-    },
     "instagram": {
       "type": "string",
       "description": "Usuario de Instagram sin @."

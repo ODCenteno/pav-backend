@@ -37,11 +37,6 @@
       },
       "description": "Identificador único en la URL."
     },
-    "icon": {
-      "type": "string",
-      "default": "location",
-      "description": "Nombre del ícono a mostrar (del catálogo de íconos de Strapi). Ejemplo: location, star, shopping-cart."
-    },
     "color": {
       "type": "string",
       "default": "#5A8A80",
@@ -51,20 +46,6 @@
       "type": "integer",
       "default": 0,
       "description": "Orden de aparición. Los números menores aparecen primero."
-    },
-    "isActive": {
-      "type": "boolean",
-      "default": true,
-      "description": "Marca esta casilla para que la categoría aparezca en el sitio público."
-    },
-    "description": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "description": "Descripción breve de la categoría."
     },
     "listings": {
       "type": "relation",
