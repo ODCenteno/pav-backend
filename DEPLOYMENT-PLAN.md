@@ -396,7 +396,7 @@ Exact names matching the actual code. Mark sensitive values as **secret** in the
 
 | Key | Example value | Notes |
 |---|---|---|
-| `FRONTEND_URL` | `https://pav-frontend.pixie-cemodan.workers.dev` | For CORS + invite/reset email links |
+| `FRONTEND_URL` | `https://guiacomunidadesloretanas.com` | For CORS + invite/reset email links |
 | `WEBHOOK_SECRET` | `hex...` | 🔒 secret; copy to frontend `WEBHOOK_SECRET` env |
 | `STRAPI_TELEMETRY_DISABLED` | `true` | Opt out of Strapi anonymous telemetry |
 
@@ -441,7 +441,7 @@ The Worker serves as a proxy: it fetches the original from R2, Cloudflare applie
 1. **Keep R2 bucket public**: In Cloudflare dashboard → R2 → `pav-assets` → Settings → **Bucket access** = **No Cloudflare accounts can access**. This makes objects publicly readable via the R2 public URL.
 
 2. **CORS on R2 bucket** (already done for dev):
-   - Allowed origins: `https://pav-frontend.pixie-cemodan.workers.dev`, `https://<koyeb-url>`
+   - Allowed origins: `https://guiacomunidadesloretanas.com`, `https://<koyeb-url>`
    - Methods: `GET`, `PUT`, `HEAD`
 
 3. **Create Image Resizing Worker** (in `pav-frontend` or a separate Worker project):
@@ -533,7 +533,7 @@ Do these in the dashboards before deploying.
 - [ ] **Neon**: create project → copy connection string (`DATABASE_URL`) → verify `psql` connects with `sslmode=require`
 - [ ] **Cloudflare R2**:
   - [ ] Bucket `pav-assets` exists with read/write API token
-  - [ ] CORS set: origins = `https://pav-frontend.pixie-cemodan.workers.dev`, `https://<koyeb-url>`; methods `GET, PUT, HEAD`
+  - [ ] CORS set: origins = `https://guiacomunidadesloretanas.com`, `https://<koyeb-url>`; methods `GET, PUT, HEAD`
   - [ ] Bucket access: public (objects readable without auth via `pub-*.r2.dev`)
 - [ ] **Cloudflare Workers** (Image Resizing):
   - [ ] Deploy the resize Worker (§6)
@@ -626,7 +626,7 @@ After first successful Koyeb deploy + migration:
    | Field | Value |
    |---|---|
    | Name | `Frontend cache purge` |
-   | URL | `https://pav-frontend.pixie-cemodan.workers.dev/api/revalidate` |
+   | URL | `https://guiacomunidadesloretanas.com/api/revalidate` |
    | Headers | `X-Webhook-Secret: <WEBHOOK_SECRET>` |
    | Events | ✅ `entry.publish` · ✅ `entry.unpublish` |
 
@@ -750,7 +750,7 @@ Run these after the Koyeb deploy is healthy.
 - [ ] Webhook test: publish a listing → Cloudflare Workers logs show `POST /api/revalidate` 200
 - [ ] Browser offline: navigate to site → SW intercepts → stale content renders from cache
 - [ ] Lighthouse PWA audit: installable, service worker active, offline test passes
-- [ ] CORS preflight: `curl -X OPTIONS -H "Origin: https://pav-frontend.pixie-cemodan.workers.dev" -H "Access-Control-Request-Method: GET" https://<koyeb-url>/api/listings -I` → `Access-Control-Allow-Origin` matches
+- [ ] CORS preflight: `curl -X OPTIONS -H "Origin: https://guiacomunidadesloretanas.com" -H "Access-Control-Request-Method: GET" https://<koyeb-url>/api/listings -I` → `Access-Control-Allow-Origin` matches
 - [ ] CSP: Strapi admin console shows no `Refused to load` for R2 images
 - [ ] Telemetry: Koyeb outbound logs show no calls to `telemetry.strapi.io`
 - [ ] Owner role: `GET /api/owners` (as admin) → 200; "Dueño de Negocio" role has update permission on `listing`

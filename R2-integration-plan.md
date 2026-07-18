@@ -3,7 +3,7 @@
 **Limit:** `image/jpeg`, `image/png`, `image/webp` · ≤ 3 MB  
 **Language:** All validation feedback in **Spanish**  
 **Bucket + API token:** Already exist  
-**Public domain:** `<your-r2-public-base-url>` (R2.dev URL or custom domain `assets.puertoaguaverde.mx` TBD)
+**Public domain:** `<your-r2-public-base-url>` (R2.dev URL or custom domain `assets.guiacomunidadesloretanas.com` TBD)
 
 ---
 
@@ -81,7 +81,7 @@ Actual values from `.env` (dev):
 ## 4. Public serving via R2.dev URL (no custom domain yet)
 
 Images are served from the `R2_PUBLIC_BASE_URL` value in `.env`.  
-Once `assets.puertoaguaverde.mx` is configured as a custom domain on the bucket, update `R2_PUBLIC_BASE_URL` and add it to CSP directives.
+Once `assets.guiacomunidadesloretanas.com` is configured as a custom domain on the bucket, update `R2_PUBLIC_BASE_URL` and add it to CSP directives.
 
 ---
 
@@ -214,7 +214,7 @@ CORS is configured in the Cloudflare dashboard (the R2 Workers API doesn't suppo
       "AllowedOrigins": [
         "http://localhost:1337",
         "http://localhost:4321",
-        "https://pav-frontend.pixie-cemodan.workers.dev/"
+        "https://guiacomunidadesloretanas.com/"
       ],
       "AllowedMethods": ["GET", "PUT", "HEAD"],
       "AllowedHeaders": ["*"],
@@ -288,6 +288,6 @@ Then, against a running dev instance:
 ## Open items
 
 1. **`checksumAlgorithm: 'CRC32'`** — confirmed working. `preventOverwrite: true` is still in config — R2 does not support it, but uploads work so it may be safely ignored by R2.
-2. **Custom domain** — `assets.puertoaguaverde.mx` is not yet configured on the R2 bucket. When added, update `R2_PUBLIC_BASE_URL` in `.env` and add the domain to CSP directives in `config/middlewares.ts`.
+2. **Custom domain** — `assets.guiacomunidadesloretanas.com` is not yet configured on the R2 bucket. When added, update `R2_PUBLIC_BASE_URL` in `.env` and add the domain to CSP directives in `config/middlewares.ts`.
 3. **Frontend display** — Verified working in tests; live browser verification on `localhost:4321` TBD (requires Strapi dev server running with R2).
 4. **Production CORS** — When deploying to production, add the production frontend origin (e.g., `https://www.puertoaguaverde.mx`) to the R2 bucket CORS rules.

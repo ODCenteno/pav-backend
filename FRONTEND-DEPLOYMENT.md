@@ -404,7 +404,7 @@ import { writeFileSync } from 'node:fs';
 export default defineConfig({
   output: 'server',
   adapter: cloudflare({ imageService: 'cloudflare', runtime: { mode: 'off' } }),
-  site: 'https://pav-frontend.pixie-cemodan.workers.dev/',
+  site: 'https://guiacomunidadesloretanas.com/',
   integrations: [react(), sitemap()],
   i18n: { locales: ['es', 'en'], defaultLocale: 'es', routing: { prefixDefaultLocale: false } },
   // Hook into build: inject SW version

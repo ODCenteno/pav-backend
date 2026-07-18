@@ -379,7 +379,7 @@ export default factories.createCoreRouter('api::community-member.community-membe
 - **3,000 emails/month free** — sufficient for ~82 owners with occasional resets/invites
 - **SMTP relay** — works with `@strapi/provider-email-nodemailer` (no custom provider needed)
 - **No sending domain required for testing** — use `onboarding@resend.dev` initially
-- **Production-ready** — add `mail.puertoaguaverde.mx` as verified domain when ready
+- **Production-ready** — add `mail.guiacomunidadesloretanas.com` as verified domain when ready
 
 ### 6.2 Provider choice
 
@@ -423,7 +423,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       },
       settings: {
         defaultFrom: env('EMAIL_FROM', 'PAV Notificaciones <onboarding@resend.dev>'),
-        defaultReplyTo: env('EMAIL_REPLY_TO', 'hola@puertoaguaverde.mx'),
+        defaultReplyTo: env('EMAIL_REPLY_TO', 'hola@guiacomunidadesloretanas.com'),
       },
     },
   },
@@ -620,7 +620,7 @@ async function seedSpanishEmailTemplates(strapi: Core.Strapi) {
   const templates = await pluginStore.get({ key: 'email_templates' });
   if (!templates) return;
 
-  const frontendUrl = strapi.env('FRONTEND_URL', 'https://pav-frontend.pixie-cemodan.workers.dev');
+  const frontendUrl = strapi.env('FRONTEND_URL', 'https://guiacomunidadesloretanas.com');
 
   // Reset password — only override if not already customized
   if (!templates.reset_password?.body?.includes('PAV') && !templates.reset_password?.body?.includes('Restablece')) {
@@ -780,7 +780,7 @@ export default {
     const resetToken = await strapi.plugin('users-permissions').service('user').getResetPasswordToken(user);
 
     // 4. Build invite URL
-    const frontendUrl = strapi.env('FRONTEND_URL', 'https://pav-frontend.pixie-cemodan.workers.dev');
+    const frontendUrl = strapi.env('FRONTEND_URL', 'https://guiacomunidadesloretanas.com');
     const inviteUrl = `${frontendUrl}/establecer-contrasena?code=${encodeURIComponent(resetToken)}`;
 
     // 5. Send custom invite email via Resend
@@ -792,7 +792,7 @@ export default {
       await emailService.send({
         to: email,
         from: strapi.env('EMAIL_FROM', 'PAV Notificaciones <onboarding@resend.dev>'),
-        replyTo: strapi.env('EMAIL_REPLY_TO', 'hola@puertoaguaverde.mx'),
+        replyTo: strapi.env('EMAIL_REPLY_TO', 'hola@guiacomunidadesloretanas.com'),
         subject: inviteOwnerSubject,
         html: inviteOwnerBody(inviteUrl, { email }),
       });
@@ -1109,9 +1109,9 @@ Add these to the Koyeb env var matrix:
 | Email | `SMTP_PORT` | `465` | TLS |
 | Email | `SMTP_USER` | `resend` | Fixed for Resend SMTP |
 | Email | `SMTP_PASS` | `re_xxxxxxxxxxxx` | 🔒 = Resend API key |
-| Email | `EMAIL_FROM` | `PAV Notificaciones <no-reply@mail.puertoaguaverde.mx>` | Sender; domain verified in Resend |
-| Email | `EMAIL_REPLY_TO` | `hola@puertoaguaverde.mx` | Reply-to |
-| Integration | `FRONTEND_URL` | `https://pav-frontend.pixie-cemodan.workers.dev` | For invite/reset email links |
+| Email | `EMAIL_FROM` | `PAV Notificaciones <no-reply@mail.guiacomunidadesloretanas.com>` | Sender; domain verified in Resend |
+| Email | `EMAIL_REPLY_TO` | `hola@guiacomunidadesloretanas.com` | Reply-to |
+| Integration | `FRONTEND_URL` | `https://guiacomunidadesloretanas.com` | For invite/reset email links |
 
 ---
 

@@ -33,14 +33,29 @@ Copy `.env.example` → `.env` and fill in all values. Key variables:
 | `APP_KEYS` | Strapi app keys (comma-separated) |
 | `ADMIN_JWT_SECRET` | Admin auth secret |
 | `API_TOKEN_SALT` | API token salt |
+| `TRANSFER_TOKEN_SALT` | Transfer token salt |
 | `JWT_SECRET` | JWT secret |
 | `ENCRYPTION_KEY` | Strapi encryption key |
-| `DATABASE_FILENAME` | SQLite DB path (dev default: `.tmp/data.db`) |
+| `DATABASE_CLIENT` | `sqlite` (dev) or `postgres` (prod) |
+| `DATABASE_FILENAME` | SQLite DB path (dev; e.g. `.tmp/data.db`) |
+| `DATABASE_URL` | Full Neon PostgreSQL connection string (prod; `sslmode=require`) |
+| `DATABASE_SSL` | `true` in production |
+| `DATABASE_POOL_MIN` / `DATABASE_POOL_MAX` | Connection pool bounds (prod; e.g. `0` / `5`) |
+| `URL` | Public origin of the Strapi instance (e.g. `https://admin.guiacomunidadesloretanas.com`) |
+| `FRONTEND_URL` | Public origin of the frontend (e.g. `https://guiacomunidadesloretanas.com`) |
+| `STRAPI_URL` | Alias for `URL` (used by frontend for API calls) |
+| `GOOGLE_MAPS_API_KEY` | Google Maps API key (restricted to admin domain in production) |
 | `R2_ENDPOINT` | Cloudflare R2 S3 API endpoint |
 | `R2_ACCESS_KEY_ID` | R2 API token access key |
 | `R2_SECRET_ACCESS_KEY` | R2 API token secret |
 | `R2_BUCKET` | R2 bucket name (e.g. `pav-assets`) |
 | `R2_PUBLIC_BASE_URL` | Public URL for R2 bucket (R2.dev URL or custom domain) |
+| `WEBHOOK_SECRET` | Shared secret for the frontend cache-purge webhook |
+| `SMTP_HOST` / `SMTP_PORT` | SMTP server host and port (e.g. `smtp.resend.com` / `465`) |
+| `SMTP_USER` / `SMTP_PASS` | SMTP auth credentials |
+| `EMAIL_FROM` | Sender address (e.g. `PAV <no-reply@mail.puertoaguaverde.mx>`) |
+| `EMAIL_REPLY_TO` | Reply-to address |
+| `STRAPI_TELEMETRY_DISABLED` | Set to `true` to opt out of Strapi anonymous telemetry |
 
 ## Media uploads
 
@@ -57,7 +72,7 @@ Add the following CORS rule to your R2 bucket in the Cloudflare dashboard:
 ```json
 {
   "CORSRules": [{
-    "AllowedOrigins": ["http://localhost:1337", "http://localhost:4321"],
+    "AllowedOrigins": ["http://localhost:1337", "http://localhost:4321", "https://guiacomunidadesloretanas.com"],
     "AllowedMethods": ["GET", "PUT", "HEAD"],
     "AllowedHeaders": ["*"],
     "ExposeHeaders": ["ETag"],

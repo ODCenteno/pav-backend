@@ -85,6 +85,7 @@ public/uploads/*
 .tsbuildinfo
 .eslintcache
 
+
 ############################
 # Node.js
 ############################
@@ -96,6 +97,7 @@ logs
 results
 node_modules
 .node_history
+
 
 ############################
 # Package managers
@@ -111,11 +113,13 @@ node_modules
 .pnp.*
 yarn-error.log
 
+
 ############################
 # Tests
 ############################
 
 coverage
+
 
 ############################
 # Strapi
@@ -123,7 +127,6 @@ coverage
 
 .env
 .env.*
-.env.example
 license.txt
 exports
 .strapi
@@ -133,7 +136,6 @@ build
 .strapi-cloud.json
 
 FRONTEND_HANDOFF.md
-.env.example
 .agents/
 opencode.json
 skills-lock.json
