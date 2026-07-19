@@ -2,7 +2,7 @@
   "collectionName": "components_map_map_sections",
   "info": {
     "displayName": "Sección de Mapa",
-    "description": "Sección del mapa con descripción, botón y URL, imagen de fondo.",
+    "description": "Mapa interactivo de la página de inicio con título, descripción, centro y nivel de zoom configurables.",
     "icon": "address",
     "singularName": "map-section",
     "pluralName": "map-sections"
@@ -44,9 +44,21 @@
     "image": {
       "type": "media",
       "multiple": false,
-      "required": true,
+      "required": false,
       "allowedTypes": ["images"],
-      "description": "Imagen de fondo de la sección del mapa."
+      "description": "Imagen estática opcional. El mapa interactivo se muestra por defecto; esta imagen solo se usa como respaldo si el mapa no carga."
+    },
+    "centerPoint": {
+      "type": "component",
+      "component": "location.geo-point",
+      "repeatable": false,
+      "required": false,
+      "description": "Centro del mapa interactivo de la página de inicio. Arrastra el marcador del plugin de Google Maps para elegir el centro. Si lo dejas vacío, se usa el centro por defecto (Puerto Agua Verde: 25.51204, -111.07577)."
+    },
+    "zoom": {
+      "type": "integer",
+      "default": 12,
+      "description": "Nivel de zoom del mapa (1-18). 12 = vista de pueblo, 14 = vista de calles, 16 = vista de edificio."
     }
   }
 }

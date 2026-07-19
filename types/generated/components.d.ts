@@ -510,7 +510,7 @@ export interface LocationGeoPoint extends Struct.ComponentSchema {
 export interface MapMapSection extends Struct.ComponentSchema {
   collectionName: 'components_map_map_sections';
   info: {
-    description: 'Secci\u00F3n del mapa con descripci\u00F3n, bot\u00F3n y URL, imagen de fondo.';
+    description: 'Mapa interactivo de la p\u00E1gina de inicio con t\u00EDtulo, descripci\u00F3n, centro y nivel de zoom configurables.';
     displayName: 'Secci\u00F3n de Mapa';
     icon: 'address';
     pluralName: 'map-sections';
@@ -524,13 +524,14 @@ export interface MapMapSection extends Struct.ComponentSchema {
         };
       }>;
     buttonUrl: Schema.Attribute.String;
+    centerPoint: Schema.Attribute.Component<'location.geo-point', false>;
     description: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    image: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    image: Schema.Attribute.Media<'images'>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -538,6 +539,7 @@ export interface MapMapSection extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    zoom: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<12>;
   };
 }
 
