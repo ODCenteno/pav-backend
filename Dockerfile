@@ -1,5 +1,5 @@
 # ─── Builder stage ─────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 RUN apk add --no-cache python3 make g++ \
  && corepack enable \
@@ -17,7 +17,7 @@ COPY . .
 RUN pnpm build
 
 # ─── Runner stage ──────────────────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 RUN corepack enable \
  && corepack prepare pnpm@11.15.0 --activate
