@@ -36,6 +36,7 @@ COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/database ./database
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY .npmrc ./.npmrc
 
 ENV NODE_ENV=production
