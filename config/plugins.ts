@@ -10,7 +10,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
   },
   'users-permissions': {
     config: {
-      jwtSecret: env('JWT_SECRET'),
+      jwtSecret: env('USERS_PERMISSIONS_JWT_SECRET') || env('ADMIN_JWT_SECRET'),
     },
   },
   upload: {
