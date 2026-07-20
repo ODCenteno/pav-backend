@@ -39,16 +39,11 @@
   },
   "engines": {
     "node": ">=20.0.0 <=22.x.x",
-    "pnpm": ">=9.0.0"
+    "pnpm": ">=11.0.0"
   },
+  "packageManager": "pnpm@11.15.0",
   "strapi": {
     "uuid": "e36ac28d-80d8-4bf4-bf0b-4ddadeb60524",
     "installId": "91920a8d80127cd24e99982097f2e18b34c350c65ec663740edb219a8caa5168"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "@strapi/admin@5.39.0": "patches/@strapi__admin@5.39.0.patch",
-      "sbp-google-map-field@1.1.1": "patches/sbp-google-map-field@1.1.1.patch"
-    }
   }
 }

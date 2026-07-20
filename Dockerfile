@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 RUN apk add --no-cache python3 make g++ \
  && corepack enable \
- && corepack prepare pnpm@10 --activate
+ && corepack prepare pnpm@11.15.0 --activate
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN pnpm build
 FROM node:20-alpine AS runner
 
 RUN corepack enable \
- && corepack prepare pnpm@10 --activate
+ && corepack prepare pnpm@11.15.0 --activate
 
 WORKDIR /app
 
