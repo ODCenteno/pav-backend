@@ -1,0 +1,12 @@
+#!/bin/sh
+echo "=== DB CONFIG DEBUG ==="
+echo "DATABASE_CLIENT=$DATABASE_CLIENT"
+echo "DATABASE_URL=${DATABASE_URL:0:20}..."
+echo "NODE_ENV=$NODE_ENV"
+echo "PWD=$(pwd)"
+echo "config dir contents:"
+ls -la config/ 2>/dev/null || echo "no config/"
+echo "dist/config contents:"
+ls -la dist/config/ 2>/dev/null || echo "no dist/config/"
+echo "======================="
+exec "$@"

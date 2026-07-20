@@ -35,6 +35,7 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/database ./database
+COPY --from=builder /app/scripts ./scripts
 COPY config/ ./config/
 COPY .npmrc ./.npmrc
 
@@ -44,4 +45,7 @@ EXPOSE 1337
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:1337/_health || exit 1
 
-CMD ["./node_modules/.bin/strapi", "start"]
+COPY scripts/debug-env.sh /usr/local/bin/debug-env
+RUN chmod +x /usr/local/bin/debug-env
+
+CMD ["/usr/local/bin/debug-env", "./node_modules/.bin/strapi", "start"]
