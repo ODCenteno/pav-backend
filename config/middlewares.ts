@@ -52,7 +52,6 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
     {
       name: 'strapi::cors',
       config: {
-        enabled: true,
         headers: '*',
         origin: [frontendUrl, 'http://localhost:4321'],
       },

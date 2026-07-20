@@ -8,6 +8,11 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       defaultLocale: 'es-MX',
     },
   },
+  'users-permissions': {
+    config: {
+      jwtSecret: env('JWT_SECRET'),
+    },
+  },
   upload: {
     config: {
       provider: 'aws-s3',
