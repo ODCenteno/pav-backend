@@ -1,9 +1,12 @@
 # ─── Builder stage ─────────────────────────────────────────────────────────
-FROM node:22-alpine AS builder
+ARG NODE_VERSION=22
+ARG PNPM_VERSION=11.15.0
+
+FROM node:${NODE_VERSION}-alpine AS builder
 
 RUN apk add --no-cache python3 make g++ \
  && corepack enable \
- && corepack prepare pnpm@11.15.0 --activate
+ && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /app
 
@@ -17,10 +20,12 @@ COPY . .
 RUN pnpm build
 
 # ─── Runner stage ──────────────────────────────────────────────────────────
+ARG PNPM_VERSION=11.15.0
+
 FROM node:22-alpine AS runner
 
 RUN corepack enable \
- && corepack prepare pnpm@11.15.0 --activate
+ && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /app
 
