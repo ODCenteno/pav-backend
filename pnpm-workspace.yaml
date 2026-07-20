@@ -1,9 +1,11 @@
-ignoredBuiltDependencies:
-  - '@swc/core'
-  - better-sqlite3
-  - core-js-pure
-  - esbuild
-  - sharp
+allowBuilds:
+  '@swc/core': true
+  better-sqlite3: true
+  core-js-pure: true
+  esbuild: true
+  sharp: true
+
+ignoredBuiltDependencies: '[]'
 
 onlyBuiltDependencies:
   - '@swc/core'
@@ -14,3 +16,4 @@ onlyBuiltDependencies:
 
 patchedDependencies:
   '@strapi/admin@5.39.0': patches/@strapi__admin@5.39.0.patch
+  sbp-google-map-field@1.1.1: patches/sbp-google-map-field@1.1.1.patch

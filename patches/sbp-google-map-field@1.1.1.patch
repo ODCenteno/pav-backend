@@ -1,47 +1,22 @@
 diff --git a/dist/_chunks/GoogleMapInput-82adRQ2s.js b/dist/_chunks/GoogleMapInput-82adRQ2s.js
-index abc1234..def5678 100644
+index 0faf31b41aa19c5c7c77bc1d75290b02a0ceff2b..e2b6d8259514f87d7850d9e549638f61fac111d3 100644
 --- a/dist/_chunks/GoogleMapInput-82adRQ2s.js
 +++ b/dist/_chunks/GoogleMapInput-82adRQ2s.js
-@@ -20,7 +20,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
-       if (window.google && window.google.maps) return resolve();
-       const script = document.createElement("script");
--      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
-+      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker`;
-       script.async = true;
-       script.onload = resolve;
-       document.body.appendChild(script);
-@@ -35,7 +35,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
-        zoom
-      });
--      const marker = new window.google.maps.Marker({
-+      const marker = new window.google.maps.marker.AdvancedMarkerElement({
-         position: { lat, lng },
-         map: mapInstance.current,
-         draggable: true
-@@ -43,7 +43,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
-      });
-      markerRef.current = marker;
--      marker.addListener("dragend", (e) => {
-+      marker.addEventListener("dragend", (e) => {
-         const newLat = e.latLng.lat();
-         const newLng = e.latLng.lng();
-         setLat(newLat);
-@@ -55,7 +55,9 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
-     }, [apiKey]);
-     react.useEffect(() => {
-       if (mapInstance.current) {
-         mapInstance.current.panTo({ lat, lng });
--        markerRef.current.setPosition({ lat, lng });
-+        if (markerRef.current) {
-+          markerRef.current.position = { lat, lng };
-+        }
-       }
-     }, [lat, lng]);
+@@ -20,7 +20,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attrib
+   const loadGoogleMapsScript = (key) => new Promise((resolve) => {
+     if (window.google && window.google.maps) return resolve();
+     const script = document.createElement("script");
+-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
++    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker`;
+     script.async = true;
+     script.onload = resolve;
+     document.body.appendChild(script);
 diff --git a/dist/_chunks/GoogleMapInput-DXoEl3dB.mjs b/dist/_chunks/GoogleMapInput-DXoEl3dB.mjs
-index abc1234..def5678 100644
+index 5f08d39dc9f957093b9d2ef2b21f285807f59373..6927c578bcab6d0e95529877f75497f9365229f8 100644
 --- a/dist/_chunks/GoogleMapInput-DXoEl3dB.mjs
 +++ b/dist/_chunks/GoogleMapInput-DXoEl3dB.mjs
-@@ -18,7 +18,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attribu
+@@ -18,7 +18,7 @@ const GoogleMapInput = ({ name, value = {}, onChange, error, description, attrib
+   const loadGoogleMapsScript = (key) => new Promise((resolve) => {
      if (window.google && window.google.maps) return resolve();
      const script = document.createElement("script");
 -    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
