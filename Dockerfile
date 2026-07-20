@@ -1,8 +1,11 @@
 # ─── Builder stage ─────────────────────────────────────────────────────────
 ARG NODE_VERSION=22
 ARG PNPM_VERSION=11.15.0
+ARG STRAPI_ADMIN_BACKEND_URL=https://admin.guiacomunidadesloretanas.com
 
 FROM node:${NODE_VERSION}-alpine AS builder
+
+ENV STRAPI_ADMIN_BACKEND_URL=${STRAPI_ADMIN_BACKEND_URL}
 
 RUN apk add --no-cache python3 make g++ \
  && corepack enable \

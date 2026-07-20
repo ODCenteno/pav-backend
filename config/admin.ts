@@ -1,6 +1,7 @@
 import type { Core } from '@strapi/strapi';
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => ({
+  url: env('ADMIN_URL', '/admin'),
   auth: {
     secret: env('ADMIN_JWT_SECRET'),
   },
@@ -20,7 +21,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => 
     promoteEE: env.bool('FLAG_PROMOTE_EE', true),
   },
   preview: {
-    enabled: false,  // or true if you want a live preview button
+    enabled: false,
     config: {
       handler: () => undefined,
       allowedOrigins: [],

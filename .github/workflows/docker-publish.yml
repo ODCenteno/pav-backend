@@ -54,3 +54,4 @@ jobs:
           build-args: |
             NODE_VERSION=22
             PNPM_VERSION=11.15.0
+            STRAPI_ADMIN_BACKEND_URL=https://admin.guiacomunidadesloretanas.com

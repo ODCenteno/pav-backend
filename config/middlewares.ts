@@ -4,6 +4,10 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
   const frontendUrl = env('FRONTEND_URL', 'http://localhost:4321');
   const r2PublicUrl = env('R2_PUBLIC_BASE_URL', '');
   const r2Origin = r2PublicUrl ? new URL(r2PublicUrl).origin : '';
+  const adminUrl = env('ADMIN_URL', '');
+  const adminOrigin = adminUrl && adminUrl.startsWith('http')
+    ? new URL(adminUrl).origin
+    : '';
 
   return [
     'strapi::logger',
@@ -21,6 +25,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
             'connect-src': [
               "'self'",
               frontendUrl,
+              adminOrigin,
               'https://maps.googleapis.com',
               'https://*.googleapis.com',
             ],
@@ -53,7 +58,11 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
       name: 'strapi::cors',
       config: {
         headers: '*',
-        origin: [frontendUrl, 'http://localhost:4321'],
+        origin: [
+          frontendUrl,
+          adminOrigin,
+          'http://localhost:4321',
+        ].filter(Boolean),
       },
     },
     'strapi::poweredBy',
