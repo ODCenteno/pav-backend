@@ -1,0 +1,59 @@
+# Version control
+.git
+.gitignore
+
+# Environment & secrets
+.env
+.env.*
+
+# Strapi dev artifacts
+.tmp
+.cache
+.strapi
+.strapi-updater.json
+.strapi-cloud.json
+
+# Build output (created fresh inside Docker)
+dist
+build
+.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation & planning
+*.md
+DEPLOYMENT-PLAN.md
+FRONTEND-DEPLOYMENT.md
+R2-integration-plan.md
+RBAC-EMAIL-PLAN.md
+
+# Backups
+backup
+*.tar.gz
+*.bak
+
+# Tests
+coverage
+*.spec.ts
+*.test.ts
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# Agent & tooling
+.agents
+opencode.json
+skills-lock.json
+FRONTEND_HANDOFF.md
+
+# Node
+node_modules
+.pnpm-store
