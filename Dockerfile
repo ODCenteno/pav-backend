@@ -43,6 +43,7 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY .npmrc ./.npmrc
 
 ENV NODE_ENV=production
+ENV STRAPI_TELEMETRY_DISABLED=true
 EXPOSE 1337
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \

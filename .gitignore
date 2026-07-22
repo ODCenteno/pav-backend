@@ -39,6 +39,9 @@ $RECYCLE.BIN/
 *.7z
 *.csv
 *.dat
+*.db
+*.db-shm
+*.db-wal
 *.dmg
 *.gz
 *.iso
@@ -124,7 +127,7 @@ coverage
 ############################
 # Strapi
 ############################
-
+/backup
 .env
 .env.*
 license.txt
