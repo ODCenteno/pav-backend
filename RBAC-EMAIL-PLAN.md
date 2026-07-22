@@ -6,6 +6,28 @@
 
 ---
 
+## Status: ⏸️ DEFERRED — Phase 2
+
+This plan is **out of scope for the current launch** (public-facing site only, no owner portal).
+
+**Deferred features:**
+- Owner role (`Dueño de Negocio` / type `owner`) in `up_roles`
+- Resend SMTP integration for transactional emails
+- Spanish email templates (reset password, invite)
+- Bootstrap script to seed owner role + email templates on startup
+- Ownership policies (listing owners can only edit their own listings)
+- Owner Portal at `/mi-panel/*` (login, mi-panel, auth middleware)
+
+**Rationale:** Current launch is public-facing only. Backend exposes content via public REST API; no owner authentication needed.
+
+**Reactivation criteria:** When the Owner Portal feature is prioritized for development.
+
+**Last updated:** 2026-07-20 (after locale rename `es` → `es-MX` in production Neon DB)
+
+---
+
+---
+
 ## 1. Architecture — Two Auth Systems
 
 Strapi exposes two distinct authentication systems. They are completely separate:
