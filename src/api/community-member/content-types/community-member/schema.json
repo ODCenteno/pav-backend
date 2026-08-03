@@ -74,24 +74,16 @@
       "allowedTypes": ["images"],
       "description": "Galería de imágenes adicionales (trabajo, entorno, retratos)."
     },
-    "social": {
+    "contact": {
       "type": "component",
-      "repeatable": true,
-      "component": "contact.social-links",
+      "repeatable": false,
+      "component": "contact.contact-info",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       },
-      "description": "Redes sociales y canales de contacto de la persona."
-    },
-    "phone": {
-      "type": "string",
-      "description": "Número de teléfono principal."
-    },
-    "whatsapp": {
-      "type": "string",
-      "description": "Número de WhatsApp con código de país."
+      "description": "Información de contacto de la persona (WhatsApp, teléfono, email, redes sociales)."
     },
     "listings": {
       "type": "relation",

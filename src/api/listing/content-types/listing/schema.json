@@ -73,6 +73,15 @@
       ],
       "description": "Galería de imágenes adicionales del lugar. Puedes subir varias a la vez. Formatos: JPG, PNG o WebP."
     },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Logotipo del lugar (opcional). Se muestra junto al título en la página de detalle."
+    },
     "price": {
       "type": "string",
       "description": "Precio o rango de precios en texto libre. Ejemplo: $500-$800 MXN por persona."
@@ -194,17 +203,6 @@
         }
       },
       "description": "Productos o servicios estructurados ofrecidos por este lugar."
-    },
-    "social": {
-      "type": "component",
-      "repeatable": true,
-      "component": "contact.social-links",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "description": "Redes sociales y canales de contacto del lugar."
     }
   }
 }

@@ -28,6 +28,14 @@
     "facebook": {
       "type": "string",
       "description": "Nombre o URL de la página de Facebook."
+    },
+    "tiktok": {
+      "type": "string",
+      "description": "Usuario de TikTok sin @. Ej: mi_negocio"
+    },
+    "website": {
+      "type": "string",
+      "description": "URL del sitio web. Ej: https://minegocio.com"
     }
   }
 }

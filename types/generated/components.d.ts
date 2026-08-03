@@ -127,6 +127,8 @@ export interface ContactContactInfo extends Struct.ComponentSchema {
     facebook: Schema.Attribute.String;
     instagram: Schema.Attribute.String;
     phone: Schema.Attribute.String;
+    tiktok: Schema.Attribute.String;
+    website: Schema.Attribute.String;
     whatsapp: Schema.Attribute.String;
   };
 }
@@ -214,6 +216,44 @@ export interface DestinationDestinationStory extends Struct.ComponentSchema {
   attributes: {
     image: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
     text: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ExperienceExperienceBlock extends Struct.ComponentSchema {
+  collectionName: 'components_experience_experience_blocks';
+  info: {
+    description: 'Secci\u00F3n de contenido libre con t\u00EDtulo, texto, imagen y enlace opcional. Para la p\u00E1gina de experiencias.';
+    displayName: 'Bloque de Experiencia';
+    icon: 'layout';
+    pluralName: 'experience-blocks';
+    singularName: 'experience-block';
+  };
+  attributes: {
+    image: Schema.Attribute.Media<'images'>;
+    layout: Schema.Attribute.Enumeration<
+      ['image-left', 'image-right', 'image-top', 'text-only']
+    > &
+      Schema.Attribute.DefaultTo<'image-left'>;
+    link: Schema.Attribute.String;
+    linkLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    text: Schema.Attribute.RichText &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -730,6 +770,7 @@ declare module '@strapi/strapi' {
       'contact.social-links': ContactSocialLinks;
       'cta.cta-section': CtaCtaSection;
       'destination.destination-story': DestinationDestinationStory;
+      'experience.experience-block': ExperienceExperienceBlock;
       'guide.amenity-item': GuideAmenityItem;
       'guide.intro-block': GuideIntroBlock;
       'guide.milestone': GuideMilestone;

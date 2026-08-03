@@ -5,7 +5,7 @@
     "singularName": "experiences-page",
     "pluralName": "experiences-pages",
     "displayName": "Página de Experiencias",
-    "description": "Contenido de la página de experiencias: hero, encabezado de introducción, encabezado de experiencias destacadas y CTA final. Las tarjetas de experiencias destacadas se obtienen automáticamente de los listados con categoría 'experiences'."
+    "description": "Contenido de la página de experiencias: hero, introducción, secciones de contenido libre y CTA final."
   },
   "options": {
     "draftAndPublish": true
@@ -25,24 +25,55 @@
       "type": "component",
       "component": "hero.hero-section",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Imagen de fondo con título y descripción que aparece en la cabecera de la página."
     },
     "introHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Título y subtítulo de la introducción que aparece debajo de la imagen principal."
     },
-    "featuredHeader": {
+    "sectionsHeader": {
       "type": "component",
       "component": "section.section-header",
       "repeatable": false,
-      "description": "Título y subtítulo que encabezan la sección de experiencias destacadas."
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado para la sección de bloques de contenido."
+    },
+    "sections": {
+      "type": "component",
+      "component": "experience.experience-block",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Bloques de contenido de la página. Agrega uno por cada sección que quieras mostrar."
     },
     "finalCta": {
       "type": "component",
       "component": "cta.cta-section",
       "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "description": "Sección final con título, descripción y botón que invita al visitante a realizar una acción."
     }
   }

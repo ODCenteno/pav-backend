@@ -1,0 +1,58 @@
+{
+  "collectionName": "components_experience_experience_blocks",
+  "info": {
+    "displayName": "Bloque de Experiencia",
+    "description": "Sección de contenido libre con título, texto, imagen y enlace opcional. Para la página de experiencias.",
+    "icon": "layout",
+    "singularName": "experience-block",
+    "pluralName": "experience-blocks"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título del bloque. Ejemplo: 'Kayak por la Bahía', 'Gastronomía Local'."
+    },
+    "text": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Contenido del bloque. Acepta formato enriquecido: negritas, listas, enlaces."
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Imagen representativa del bloque (opcional)."
+    },
+    "link": {
+      "type": "string",
+      "description": "Enlace opcional. Ejemplo: /sitios/kayak-bahia"
+    },
+    "linkLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del botón o enlace. Ejemplo: 'Ver más', 'Reservar'."
+    },
+    "layout": {
+      "type": "enumeration",
+      "enum": ["image-left", "image-right", "image-top", "text-only"],
+      "default": "image-left",
+      "description": "Disposición visual del bloque."
+    }
+  }
+}

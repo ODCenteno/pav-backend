@@ -625,6 +625,12 @@ export interface ApiCommunityMemberCommunityMember
           localized: true;
         };
       }>;
+    contact: Schema.Attribute.Component<'contact.contact-info', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -646,7 +652,6 @@ export interface ApiCommunityMemberCommunityMember
     >;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    phone: Schema.Attribute.String;
     photo: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     pullQuote: Schema.Attribute.Text &
@@ -666,16 +671,9 @@ export interface ApiCommunityMemberCommunityMember
         };
       }>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
-    social: Schema.Attribute.Component<'contact.social-links', true> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    whatsapp: Schema.Attribute.String;
   };
 }
 
@@ -683,7 +681,7 @@ export interface ApiExperiencesPageExperiencesPage
   extends Struct.SingleTypeSchema {
   collectionName: 'experiences_pages';
   info: {
-    description: "Contenido de la p\u00E1gina de experiencias: hero, encabezado de introducci\u00F3n, encabezado de experiencias destacadas y CTA final. Las tarjetas de experiencias destacadas se obtienen autom\u00E1ticamente de los listados con categor\u00EDa 'experiences'.";
+    description: 'Contenido de la p\u00E1gina de experiencias: hero, introducci\u00F3n, secciones de contenido libre y CTA final.';
     displayName: 'P\u00E1gina de Experiencias';
     pluralName: 'experiences-pages';
     singularName: 'experiences-page';
@@ -700,18 +698,47 @@ export interface ApiExperiencesPageExperiencesPage
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    featuredHeader: Schema.Attribute.Component<'section.section-header', false>;
-    finalCta: Schema.Attribute.Component<'cta.cta-section', false>;
-    hero: Schema.Attribute.Component<'hero.hero-section', false>;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     internalLabel: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Experiences Page'>;
-    introHeader: Schema.Attribute.Component<'section.section-header', false>;
+    introHeader: Schema.Attribute.Component<'section.section-header', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::experiences-page.experiences-page'
     >;
     publishedAt: Schema.Attribute.DateTime;
+    sections: Schema.Attribute.Component<'experience.experience-block', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    sectionsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1101,6 +1128,7 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    logo: Schema.Attribute.Media<'images'>;
     mainImage: Schema.Attribute.Media<'images'>;
     members: Schema.Attribute.Relation<
       'manyToMany',
@@ -1142,12 +1170,6 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
       }>;
     slug: Schema.Attribute.UID<'title'> &
       Schema.Attribute.Required &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    social: Schema.Attribute.Component<'contact.social-links', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
