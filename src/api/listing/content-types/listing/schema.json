@@ -75,12 +75,12 @@
     },
     "logo": {
       "type": "media",
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "allowedTypes": [
         "images"
       ],
-      "description": "Logotipo del lugar (opcional). Se muestra junto al título en la página de detalle."
+      "description": "Logotipos del lugar (opcional, múltiples). Se muestran centrados debajo de la imagen principal en la página de detalle."
     },
     "price": {
       "type": "string",

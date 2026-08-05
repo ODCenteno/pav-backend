@@ -1128,7 +1128,7 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    logo: Schema.Attribute.Media<'images'>;
+    logo: Schema.Attribute.Media<'images', true>;
     mainImage: Schema.Attribute.Media<'images'>;
     members: Schema.Attribute.Relation<
       'manyToMany',
