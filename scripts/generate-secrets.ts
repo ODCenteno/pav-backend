@@ -12,16 +12,16 @@
 import { randomBytes } from 'node:crypto';
 
 const b64 = () => randomBytes(32).toString('base64');
-const hex = () => randomBytes(32).toString('hex');
 
 const secrets = {
   APP_KEYS: `${b64()},${b64()}`,
   ADMIN_JWT_SECRET: b64(),
   API_TOKEN_SALT: b64(),
   TRANSFER_TOKEN_SALT: b64(),
-  JWT_SECRET: b64(),
+  // Consumed by config/plugins.ts (users-permissions). Distinct from
+  // ADMIN_JWT_SECRET so admin and users-permissions tokens never share a key.
+  USERS_PERMISSIONS_JWT_SECRET: b64(),
   ENCRYPTION_KEY: b64(),
-  WEBHOOK_SECRET: hex(),
 };
 
 console.log('='.repeat(60));

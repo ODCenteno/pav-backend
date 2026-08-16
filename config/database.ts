@@ -4,6 +4,14 @@ import type { Core } from '@strapi/strapi';
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database => {
   const client = env('DATABASE_CLIENT', 'sqlite');
 
+  // Absolute paths must be used as-is: path.join() would concatenate them
+  // onto the project root ("<root>/var/folders/..."), silently pointing the
+  // app at a fresh empty database outside the project.
+  const databaseFilename = env('DATABASE_FILENAME', '.tmp/data.db');
+  const sqliteFilename = path.isAbsolute(databaseFilename)
+    ? databaseFilename
+    : path.join(__dirname, '..', '..', databaseFilename);
+
   const connections = {
     mysql: {
       connection: {
@@ -45,7 +53,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
     },
     sqlite: {
       connection: {
-        filename: path.join(__dirname, '..', '..', env('DATABASE_FILENAME', '.tmp/data.db')),
+        filename: sqliteFilename,
       },
       useNullAsDefault: true,
     },
