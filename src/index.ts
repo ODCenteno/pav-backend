@@ -58,14 +58,11 @@ async function seedPublicPermissions(strapi: Core.Strapi) {
 }
 
 /**
- * One-time migration: consolidate social-links component data into contact-info.
+ * One-time migration: consolidate community-member native phone/whatsapp
+ * fields into the new contact-info component.
  *
- * - Listings: backfill any explicit social-links data (instagram handles, etc.)
- *   into the listing's contact-info component if the field is empty there.
- * - Community members: copy native phone/whatsapp fields into the new
- *   contact-info component.
- *
- * Guarded by a core-store flag so it only runs once.
+ * Guarded by a core-store flag so it only runs once. If any step fails the
+ * flag is not written, so the migration retries on the next boot.
  */
 async function migrateSocialToContact(strapi: Core.Strapi) {
   const STORE_KEY = 'migration_social_to_contact_v1';
@@ -78,49 +75,12 @@ async function migrateSocialToContact(strapi: Core.Strapi) {
 
   strapi.log.info('[migration] Starting social→contact consolidation...');
 
-  // 1. Migrate listing social-links → contact-info
-  try {
-    const listings = await strapi.db.query('api::listing.listing').findMany({
-      select: ['id', 'documentId'],
-      populate: { contact: true, social: true },
-    });
+  let failed = false;
 
-    let listingCount = 0;
-    for (const listing of listings) {
-      const explicitSocial = (listing as any).social;
-      const contact = (listing as any).contact;
-
-      if (!explicitSocial || !Array.isArray(explicitSocial) || explicitSocial.length === 0) {
-        continue;
-      }
-
-      // Find the first non-empty social entry with an instagram handle
-      const igEntry = explicitSocial.find(
-        (s: any) => s?.platform === 'instagram' && (s?.handle?.trim() || s?.url?.trim())
-      );
-
-      if (igEntry && contact && !contact.instagram) {
-        const handle = (igEntry.handle || '').replace(/^@/, '').trim()
-          || (igEntry.url || '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '');
-
-        if (handle) {
-          await strapi.db.query('components_contact_contact_infos').update({
-            where: { id: contact.id },
-            data: { instagram: handle },
-          });
-          listingCount++;
-        }
-      }
-    }
-    strapi.log.info(`[migration] Migrated ${listingCount} listing social entries → contact-info`);
-  } catch (err) {
-    strapi.log.warn('[migration] Listing social→contact migration failed (non-fatal):', err);
-  }
-
-  // 2. Migrate community-member phone/whatsapp → contact-info
+  // Migrate community-member phone/whatsapp → contact-info
   try {
     const members = await strapi.db.query('api::community-member.community-member').findMany({
-      select: ['id'],
+      select: ['id', 'phone', 'whatsapp'],
       populate: { contact: true },
     });
 
@@ -149,7 +109,13 @@ async function migrateSocialToContact(strapi: Core.Strapi) {
     }
     strapi.log.info(`[migration] Migrated ${memberCount} community-member phone/whatsapp → contact-info`);
   } catch (err) {
+    failed = true;
     strapi.log.warn('[migration] Community-member contact migration failed (non-fatal):', err);
+  }
+
+  if (failed) {
+    strapi.log.warn('[migration] social→contact consolidation incomplete; will retry on next boot.');
+    return;
   }
 
   await coreStore.set({ key: STORE_KEY, value: true });

@@ -16,7 +16,12 @@ export default factories.createCoreService(
       }
 
       const filtered = results.filter((r: { locale?: string }) => r.locale === locale);
-      return filtered.length > 0 ? filtered : results;
+      if (filtered.length > 0) {
+        return filtered;
+      }
+
+      const defaultLocale = results.filter((r: { locale?: string }) => r.locale === 'es-MX');
+      return defaultLocale.length > 0 ? defaultLocale : results;
     },
   }),
 );

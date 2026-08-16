@@ -27,7 +27,7 @@ const EXPECTED_PUBLIC_PERMISSIONS = [
   'api::guide-page.guide-page.find',
 ];
 
-function makeStrapi(opts: { listings?: any[]; members?: any[]; listingError?: Error } = {}) {
+function makeStrapi(opts: { listings?: any[]; members?: any[]; memberError?: Error } = {}) {
   const createdPermissions: any[] = [];
   const lifecycleSubscribe = vi.fn();
 
@@ -40,11 +40,11 @@ function makeStrapi(opts: { listings?: any[]; members?: any[]; listingError?: Er
     return { id: createdPermissions.length, ...data };
   });
 
-  const listingFindMany = vi.fn(async (args: any) => {
-    if (opts.listingError) throw opts.listingError;
-    return opts.listings ?? [];
+  const listingFindMany = vi.fn(async () => opts.listings ?? []);
+  const memberFindMany = vi.fn(async () => {
+    if (opts.memberError) throw opts.memberError;
+    return opts.members ?? [];
   });
-  const memberFindMany = vi.fn(async () => opts.members ?? []);
   const memberUpdate = vi.fn(async ({ where, data }: any) => ({ id: where.id, ...data }));
   const contactUpdate = vi.fn(async ({ where, data }: any) => ({ id: where.id, ...data }));
   const contactCreate = vi.fn(async ({ data }: any) => ({ id: 55, ...data }));
@@ -165,17 +165,10 @@ describe('bootstrap: social-to-contact migration', () => {
 
   const memberWithPhone = [{ id: 3, phone: '6121112222', whatsapp: null, contact: null }];
 
-  it('backfills instagram handles from social into contact-info once, then sets the core-store flag', async () => {
-    const fake = makeStrapi({ listings: listingWithSocial, members: memberWithPhone });
+  it('migrates community-member phone/whatsapp into contact-info, then sets the core-store flag', async () => {
+    const fake = makeStrapi({ members: memberWithPhone });
 
     await bootstrap({ strapi: fake.strapi });
-
-    // Only listing 10 qualifies (11 already has instagram, 12 has no ig entry).
-    expect(fake.contactUpdate).toHaveBeenCalledTimes(1);
-    expect(fake.contactUpdate).toHaveBeenCalledWith({
-      where: { id: 7 },
-      data: { instagram: 'pav_tours' }, // leading @ stripped
-    });
 
     // Member path: new contact component created and linked.
     expect(fake.contactCreate).toHaveBeenCalledWith({ data: { phone: '6121112222', whatsapp: null } });
@@ -197,44 +190,52 @@ describe('bootstrap: social-to-contact migration', () => {
     expect(fake.storeSet).not.toHaveBeenCalled();
   });
 
-  it('documents current (known-defective) behavior; fix scheduled separately: populates the removed `social` field', async () => {
-    const fake = makeStrapi({ listings: listingWithSocial });
+  it('no longer queries the listing content type (dead social branch removed)', async () => {
+    const fake = makeStrapi({ listings: listingWithSocial, members: memberWithPhone });
 
     await bootstrap({ strapi: fake.strapi });
 
-    expect(fake.listingFindMany).toHaveBeenCalledWith({
-      select: ['id', 'documentId'],
-      // `social` no longer exists on the listing schema; the migration still
-      // requests it, which against a real database yields no social data
-      // (or a rejected populate swallowed by the try/catch).
-      populate: { contact: true, social: true },
-    });
+    // The migration is community-member-only: no listing query, no social
+    // populate, and no contact-info backfill via the listing branch.
+    const queriedUids = fake.strapi.db.query.mock.calls.map((call: any[]) => call[0]);
+    expect(queriedUids).not.toContain('api::listing.listing');
+    expect(fake.listingFindMany).not.toHaveBeenCalled();
+    expect(fake.contactUpdate).not.toHaveBeenCalled();
   });
 
-  it('documents current (known-defective) behavior; fix scheduled separately: sets the migration flag even when a step fails', async () => {
-    const fake = makeStrapi({ listingError: new Error('populate social failed') });
+  it('does not set the migration flag when a step fails, so the next boot retries', async () => {
+    const fake = makeStrapi({ memberError: new Error('community-member query failed') });
 
     await bootstrap({ strapi: fake.strapi });
 
-    // The failure is logged as non-fatal...
+    // The failure is logged as non-fatal, with a retry notice.
     expect(fake.strapi.log.warn).toHaveBeenCalledWith(
-      '[migration] Listing social→contact migration failed (non-fatal):',
+      '[migration] Community-member contact migration failed (non-fatal):',
       expect.any(Error)
     );
-    // ...but the flag is still written, so the migration never re-runs.
-    expect(fake.storeSet).toHaveBeenCalledWith({ key: 'migration_social_to_contact_v1', value: true });
+    expect(fake.strapi.log.warn).toHaveBeenCalledWith(
+      '[migration] social→contact consolidation incomplete; will retry on next boot.'
+    );
+
+    // The flag is NOT written, so the migration is not marked as done.
+    expect(fake.storeSet).not.toHaveBeenCalled();
+
+    // A second boot retries the migration.
+    await bootstrap({ strapi: fake.strapi });
+    expect(fake.memberFindMany).toHaveBeenCalledTimes(2);
+    expect(fake.storeSet).not.toHaveBeenCalled();
   });
 
-  it('documents current (known-defective) behavior; fix scheduled separately: reads phone/whatsapp although members are fetched with select: [id]', async () => {
+  it('fetches community members with phone and whatsapp selected so they can be migrated', async () => {
     const fake = makeStrapi({ members: memberWithPhone });
 
     await bootstrap({ strapi: fake.strapi });
 
     const memberCall = fake.memberFindMany.mock.calls[0][0];
-    expect(memberCall.select).toEqual(['id']);
-    // Against a real database the selected columns do not include phone or
-    // whatsapp, so this branch never migrates anything; pinned as-is.
+    expect(memberCall.select).toEqual(['id', 'phone', 'whatsapp']);
     expect(memberCall.populate).toEqual({ contact: true });
-    expect(fake.contactCreate).toHaveBeenCalledTimes(1);
+
+    // phone/whatsapp are now actually read and migrated.
+    expect(fake.contactCreate).toHaveBeenCalledWith({ data: { phone: '6121112222', whatsapp: null } });
   });
 });

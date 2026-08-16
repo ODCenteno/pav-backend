@@ -40,7 +40,19 @@ describe('site-content service findByKey', () => {
     expect(result).toEqual([{ id: 1, documentId: 'a', key: 'hero', locale: 'en' }]);
   });
 
-  it('falls back to all locales when the requested locale is missing', async () => {
+  it('falls back to es-MX rows when the requested locale is missing', async () => {
+    const rows = [
+      { id: 1, documentId: 'a', key: 'hero', locale: 'en' },
+      { id: 2, documentId: 'b', key: 'hero', locale: 'es-MX' },
+    ];
+    const { service } = makeService(rows);
+
+    const result = await service.findByKey('hero', 'fr');
+
+    expect(result).toEqual([{ id: 2, documentId: 'b', key: 'hero', locale: 'es-MX' }]);
+  });
+
+  it('falls back to all locales when neither the requested locale nor es-MX is present', async () => {
     const rows = [
       { id: 1, documentId: 'a', key: 'hero', locale: 'en' },
       { id: 2, documentId: 'b', key: 'hero', locale: 'es' },
@@ -49,7 +61,6 @@ describe('site-content service findByKey', () => {
 
     const result = await service.findByKey('hero', 'fr');
 
-    // documents current behavior; locale fallback bug tracked for later fix
     expect(result).toEqual(rows);
   });
 
