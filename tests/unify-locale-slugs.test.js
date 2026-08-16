@@ -153,36 +153,85 @@ describe('unify-locale-slugs CLI (sqlite)', () => {
     expect(recheck.code).toBe(0);
   });
 
-  it('refuses to prune when inbound links appear (apply-time guard)', () => {
+  it('repoints inbound links to the claimant before deleting the duplicate', () => {
     const dir = makeTmpDir();
     const dbPath = path.join(dir, 'work.db');
     const db = seedDb(dbPath);
-    const ins = db.prepare(
+    db.prepare(
       `INSERT INTO categories (document_id, locale, slug, name, published_at) VALUES
          ('catA','es-MX','restaurants','Restaurantes','2026-01-01'),
          ('catA','en','restaurants','Restaurantes',NULL),
-         ('catB','en','restaurants','Restaurants','2026-01-01')`
-    );
-    ins.run();
-    // Point a listing at the EN-only duplicate: pruning must be refused.
-    db.prepare(
-      `INSERT INTO listings (document_id, locale, slug, published_at) VALUES ('docA','es-MX','x','2026-01-01')`
+         ('catB','en','restaurants','Restaurants','2026-01-01'),
+         ('catB','en','restaurants','Restaurants',NULL)`
     ).run();
-    const catBId = db.prepare(`SELECT id FROM categories WHERE document_id='catB'`).get().id;
-    const listingId = db.prepare(`SELECT id FROM listings`).get().id;
-    db.prepare(`INSERT INTO listings_category_lnk (listing_id, category_id) VALUES (?, ?)`).run(
-      listingId,
-      catBId
+    db.prepare(
+      `INSERT INTO listings (document_id, locale, slug, published_at) VALUES
+         ('docA','en','the-beach','2026-01-01'),
+         ('docA','en','the-beach',NULL)`
+    ).run();
+    const enPub = db.prepare(`SELECT id FROM listings WHERE locale='en' AND published_at IS NOT NULL`).get().id;
+    const enDraft = db.prepare(`SELECT id FROM listings WHERE locale='en' AND published_at IS NULL`).get().id;
+    const dupPub = db.prepare(`SELECT id FROM categories WHERE document_id='catB' AND published_at IS NOT NULL`).get().id;
+    const dupDraft = db.prepare(`SELECT id FROM categories WHERE document_id='catB' AND published_at IS NULL`).get().id;
+    db.prepare(`INSERT INTO listings_category_lnk (listing_id, category_id) VALUES (?, ?), (?, ?)`).run(
+      enPub, dupPub, enDraft, dupDraft
     );
     db.close();
 
     const res = runCli(dbPath, '--prune-orphans', '--apply');
-    expect(res.code).toBe(1);
-    expect(res.out).toContain('inbound link');
+    expect(res.code).toBe(0);
+    expect(res.out).toContain('1 EN-only duplicate(s) pruned');
+    expect(res.out).toContain('2 link(s) repointed');
 
     const check = new Database(dbPath);
-    const count = check.prepare(`SELECT COUNT(*) AS n FROM categories WHERE document_id='catB'`).get();
+    const claimantRows = check
+      .prepare(`SELECT id, published_at IS NOT NULL AS pub, name FROM categories WHERE document_id='catA' AND locale='en'`)
+      .all();
+    const links = check
+      .prepare(`SELECT l.listing_id, c.document_id, c.locale FROM listings_category_lnk l JOIN categories c ON c.id = l.category_id`)
+      .all();
+    const dupCount = check.prepare(`SELECT COUNT(*) AS n FROM categories WHERE document_id='catB'`).get();
     check.close();
-    expect(count.n).toBe(1); // nothing deleted
+
+    // catA now has EN draft + EN published, both named in English.
+    expect(claimantRows).toHaveLength(2);
+    expect(claimantRows.every((r) => r.name === 'Restaurants')).toBe(true);
+    // Both links survive, pointing at catA EN rows.
+    expect(links).toHaveLength(2);
+    expect(links.every((l) => l.document_id === 'catA' && l.locale === 'en')).toBe(true);
+    expect(dupCount.n).toBe(0);
+  });
+
+  it('drops a redundant link instead of violating the join-table unique pair', () => {
+    const dir = makeTmpDir();
+    const dbPath = path.join(dir, 'work.db');
+    const db = seedDb(dbPath);
+    db.prepare(
+      `INSERT INTO categories (document_id, locale, slug, name, published_at) VALUES
+         ('catA','es-MX','restaurants','Restaurantes','2026-01-01'),
+         ('catA','en','restaurants','Restaurantes','2026-01-01'),
+         ('catB','en','restaurants','Restaurants','2026-01-01')`
+    ).run();
+    db.prepare(
+      `INSERT INTO listings (document_id, locale, slug, published_at) VALUES ('docA','en','the-beach','2026-01-01')`
+    ).run();
+    const listingId = db.prepare(`SELECT id FROM listings`).get().id;
+    const catAPub = db.prepare(`SELECT id FROM categories WHERE document_id='catA' AND locale='en' AND published_at IS NOT NULL`).get().id;
+    const dupPub = db.prepare(`SELECT id FROM categories WHERE document_id='catB' AND published_at IS NOT NULL`).get().id;
+    // The listing already links to catA AND to the dup: repointing the dup
+    // link would create a duplicate (listing_id, category_id) pair.
+    db.prepare(`INSERT INTO listings_category_lnk (listing_id, category_id) VALUES (?, ?), (?, ?)`).run(
+      listingId, catAPub, listingId, dupPub
+    );
+    db.close();
+
+    const res = runCli(dbPath, '--prune-orphans', '--apply');
+    expect(res.code).toBe(0);
+    expect(res.out).toContain('1 redundant link(s) removed');
+
+    const check = new Database(dbPath);
+    const links = check.prepare(`SELECT COUNT(*) AS n FROM listings_category_lnk`).get();
+    check.close();
+    expect(links.n).toBe(1); // one survived, the redundant one was dropped
   });
 });

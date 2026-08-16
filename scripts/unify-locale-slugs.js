@@ -151,16 +151,15 @@ function planUnify(rowsByTable, defaultLocale = DEFAULT_LOCALE, opts = {}) {
             dupDocumentId: doc.documentId,
             locale: dupSource.locale,
             name: dupSource.name,
+            // Row identities used only as clone SOURCES; the claimant's own
+            // row layout is re-inspected live at apply time.
+            dupDraftRowId: (doc.rows.find((r) => !r.publishedAt) || doc.rows[0]).id,
+            dupPubRowId: (doc.rows.find((r) => r.publishedAt) || doc.rows[0]).id,
           };
           if (claimantEn.length === 0) {
-            // No localization row at all: publish one cloned from the dup.
-            merge.cloneFromRowId = dupSource.id;
+            merge.needsDraftClone = true;
           } else if (!hasPublished) {
-            // Draft-only shell: publish a copy of it with the merged name.
-            merge.publishFromRowId = claimantEn[0].id;
-          } else {
-            // Published row exists: just fix its name if it differs.
-            merge.updateRowId = claimantEn.find((r) => r.publishedAt).id;
+            merge.needsPublishClone = true;
           }
           out.prunes.push({
             table: doc.table,
@@ -249,9 +248,15 @@ async function fetchRows(db, dialect, tables) {
   return rowsByTable;
 }
 
-// Inbound relations per table — verified empty before pruning a document.
+// Inbound relations per table. `ownerTable`/`ownerColumn` identify the
+// linking entity so repointing can match (locale, publication) correctly.
 const INBOUND_LINKS = {
-  categories: { table: 'listings_category_lnk', column: 'category_id' },
+  categories: {
+    table: 'listings_category_lnk',
+    column: 'category_id',
+    ownerTable: 'listings',
+    ownerColumn: 'listing_id',
+  },
 };
 
 async function tableColumns(db, dialect, table) {
@@ -270,28 +275,38 @@ async function tableColumns(db, dialect, table) {
 const quoteIdent = (d) => (d === 'order' ? '"order"' : d);
 
 /**
- * Execute one merge: make sure the claimant document ends up with a
- * PUBLISHED non-default-locale row carrying the duplicate's translated
- * name, following the project's two-rows-per-(document,locale) convention
- * (draft row + published row share the document_id).
+ * Execute one merge: make sure the claimant document ends up with BOTH a
+ * draft and a published row in the duplicate's locale, carrying the
+ * duplicate's translated name. The claimant's live row layout is inspected
+ * at apply time (plan-time row ids could be stale).
+ *
+ * Returns { rows: [{ id, locale, publishedAt }] } — the claimant's
+ * post-merge rows, used as repoint targets.
  */
 async function applyMerge(db, dialect, merge) {
   const cols = (await tableColumns(db, dialect, merge.table)).filter((c) => c !== 'id');
   const now = new Date().toISOString();
+  // Positional placeholder per dialect ($1 pg / ? sqlite).
+  const pl = (i) => (dialect === 'sqlite' ? '?' : `$${i}`);
 
-  if (merge.cloneFromRowId || merge.publishFromRowId) {
-    // Insert a published row cloned from an existing row.
-    const srcId = merge.cloneFromRowId || merge.publishFromRowId;
-    if (merge.publishFromRowId) {
-      // The draft shell the editors see must carry the translated name too,
-      // otherwise the admin panel shows the untranslated default while the
-      // live site shows the translation.
-      if (dialect === 'sqlite') {
-        db.prepare(`UPDATE ${merge.table} SET name = ? WHERE id = ?`).run(merge.name, srcId);
-      } else {
-        await db.query(`UPDATE ${merge.table} SET name = $1 WHERE id = $2`, [merge.name, srcId]);
-      }
-    }
+  const q = (sql, params) => (dialect === 'sqlite'
+    ? db.prepare(sql).all(...params)
+    : db.query(sql, params).then((r) => r.rows));
+  const x = (sql, params) => (dialect === 'sqlite'
+    ? db.prepare(sql).run(...params)
+    : db.query(sql, params));
+
+  const claimantRows = async () => q(
+    `SELECT id, locale, (published_at IS NOT NULL${dialect === 'sqlite' ? " AND published_at != ''" : ''}) AS "publishedAt"
+       FROM ${merge.table} WHERE document_id = ${pl(1)} AND locale = ${pl(2)} ORDER BY id`,
+    [merge.documentId, merge.locale]
+  );
+
+  let rows = await claimantRows();
+  const draft = rows.find((r) => !r.publishedAt);
+  const pub = rows.find((r) => r.publishedAt);
+
+  const mk = (srcId, published) => {
     const params = [];
     const ph = (v) => {
       params.push(v);
@@ -299,27 +314,94 @@ async function applyMerge(db, dialect, merge) {
     };
     const selectList = cols
       .map((c) => {
-        if (merge.cloneFromRowId && c === 'document_id') return ph(merge.documentId);
+        if (c === 'document_id') return ph(merge.documentId);
         if (c === 'name') return ph(merge.name);
-        if (c === 'published_at' || c === 'updated_at') return ph(now);
+        if (c === 'published_at' || c === 'updated_at') {
+          return ph(published ? now : null);
+        }
         return quoteIdent(c);
       })
       .join(', ');
     const colList = cols.map(quoteIdent).join(', ');
     const srcPh = ph(srcId);
     const sql = `INSERT INTO ${merge.table} (${colList}) SELECT ${selectList} FROM ${merge.table} WHERE id = ${srcPh}`;
-    if (dialect === 'sqlite') db.prepare(sql).run(...params);
-    else await db.query(sql, params);
-    return;
+    const res = x(sql, params);
+    return dialect === 'sqlite' ? Number(res.lastInsertRowid) : null;
+  };
+
+  const rename = (id) => x(
+    `UPDATE ${merge.table} SET name = ${pl(1)} WHERE id = ${pl(2)}`,
+    [merge.name, id]
+  );
+
+  // 1) ensure a DRAFT row in the dup's locale with the translated name
+  if (!draft) {
+    mk(merge.dupDraftRowId, false);
+  } else {
+    await rename(draft.id);
   }
 
-  if (merge.updateRowId) {
-    if (dialect === 'sqlite') {
-      db.prepare(`UPDATE ${merge.table} SET name = ? WHERE id = ?`).run(merge.name, merge.updateRowId);
-    } else {
-      await db.query(`UPDATE ${merge.table} SET name = $1 WHERE id = $2`, [merge.name, merge.updateRowId]);
-    }
+  // 2) ensure a PUBLISHED row in the dup's locale with the translated name
+  if (!pub) {
+    // Re-resolve the draft row id (sqlite mk returns it, pg needs a re-read).
+    const current = await claimantRows();
+    const draftRow = current.find((r) => !r.publishedAt);
+    mk(draftRow.id, true); // clone the (just renamed) draft, published
+  } else {
+    await rename(pub.id);
   }
+
+  return { rows: await claimantRows() };
+}
+
+/**
+ * Repoint inbound links of a to-be-deleted row to the claimant row that
+ * matches the LINKING entity's (locale, publication) — preserves the
+ * draft-to-draft / published-to-published / same-locale convention.
+ * Links that would violate the join table's unique index are deleted
+ * (a listing must not point twice at the same category document).
+ * Returns { repointed, deduped }.
+ */
+async function repointLinks(db, dialect, inbound, dupRowId, targets) {
+  // targets: [{ id, locale, publishedAt }]
+  const pl = (i) => (dialect === 'sqlite' ? '?' : `$${i}`);
+  const q = (sql, params) => (dialect === 'sqlite'
+    ? db.prepare(sql).all(...params)
+    : db.query(sql, params).then((r) => r.rows));
+  const x = (sql, params) => (dialect === 'sqlite'
+    ? db.prepare(sql).run(...params)
+    : db.query(sql, params));
+
+  const ownerTable = inbound.ownerTable; // e.g. 'listings'
+  const links = await q(
+    `SELECT l.id, l.${inbound.ownerColumn} AS "ownerId", o.locale,
+            (o.published_at IS NOT NULL${dialect === 'sqlite' ? " AND o.published_at != ''" : ''}) AS pub
+       FROM ${inbound.table} l JOIN ${ownerTable} o ON o.id = l.${inbound.ownerColumn}
+      WHERE l.${inbound.column} = ${pl(1)}`,
+    [dupRowId]
+  );
+
+  let repointed = 0;
+  let deduped = 0;
+  for (const link of links) {
+    const target = targets.find((t) => t.locale === link.locale && Boolean(t.publishedAt) === Boolean(link.pub));
+    if (!target) {
+      throw new Error(`no repoint target for link ${link.id} (owner locale=${link.locale} pub=${link.pub})`);
+    }
+    // unique-guard: same owner already linked to the target?
+    const clash = await q(
+      `SELECT id FROM ${inbound.table} WHERE ${inbound.ownerColumn} = ${pl(1)} AND ${inbound.column} = ${pl(2)} AND id <> ${pl(3)}`,
+      [link.ownerId, target.id, link.id]
+    );
+    if (clash.length > 0) {
+      await x(`DELETE FROM ${inbound.table} WHERE id = ${pl(1)}`, [link.id]);
+      deduped += 1;
+      continue;
+    }
+    await x(`UPDATE ${inbound.table} SET ${inbound.column} = ${pl(1)} WHERE id = ${pl(2)}`, [target.id, link.id]);
+    repointed += 1;
+  }
+  return { repointed, deduped };
 }
 
 /**
@@ -354,19 +436,20 @@ async function applyPlan(db, dialect, plan, opts = {}) {
     fs.writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`);
   }
 
-  // Phase 0: verify EVERY prune's inbound links before any write, so a
-  // refusal never leaves earlier repairs half-applied.
-  // eslint-disable-next-line no-restricted-syntax
+  // Phase 0: verify every prune's rows still exist before any write, so a
+  // refusal never leaves repairs half-applied (planning staleness check).
   for (const p of plan.prunes) {
     const inbound = INBOUND_LINKS[p.table];
     if (!inbound) throw new Error(`refusing to prune ${p.table}: no inbound-relation map`);
-    const links = dialect === 'sqlite'
-      ? db
-          .prepare(`SELECT COUNT(*) AS n FROM ${inbound.table} WHERE ${inbound.column} IN (${p.rowIds.map(() => '?').join(',')})`)
-          .all(...p.rowIds)
-      : (await db.query(`SELECT COUNT(*) AS n FROM ${inbound.table} WHERE ${inbound.column} = ANY($1::int[])`, [p.rowIds])).rows;
-    if (Number(links[0].n) > 0) {
-      throw new Error(`refusing to prune ${p.table}:${p.documentId} — ${links[0].n} inbound link(s) appeared since planning`);
+    // eslint-disable-next-line no-restricted-syntax
+    for (const rowId of p.rowIds) {
+      // eslint-disable-next-line no-await-in-loop
+      const found = dialect === 'sqlite'
+        ? db.prepare(`SELECT id FROM ${p.table} WHERE id = ?`).get(rowId)
+        : (await db.query(`SELECT id FROM ${p.table} WHERE id = $1`, [rowId])).rows;
+      if (!found || found.length === 0) {
+        throw new Error(`refusing to prune ${p.table}:${p.documentId} — planned row ${rowId} no longer exists (re-run to re-plan)`);
+      }
     }
   }
 
@@ -387,23 +470,25 @@ async function applyPlan(db, dialect, plan, opts = {}) {
     }
   }
 
-  // Phase 2: merge + prune (TOCTOU re-check of the Phase 0 guard).
+  // Phase 2: merge + repoint inbound links + prune.
   let pruned = 0;
+  let repointedTotal = 0;
+  let dedupedTotal = 0;
   // eslint-disable-next-line no-restricted-syntax
   for (const p of plan.prunes) {
     const inbound = INBOUND_LINKS[p.table];
     if (!inbound) throw new Error(`refusing to prune ${p.table}: no inbound-relation map`);
-    const links = dialect === 'sqlite'
-      ? db
-          .prepare(`SELECT COUNT(*) AS n FROM ${inbound.table} WHERE ${inbound.column} IN (${p.rowIds.map(() => '?').join(',')})`)
-          .all(...p.rowIds)
-      : (await db.query(`SELECT COUNT(*) AS n FROM ${inbound.table} WHERE ${inbound.column} = ANY($1::int[])`, [p.rowIds])).rows;
-    if (Number(links[0].n) > 0) {
-      throw new Error(`refusing to prune ${p.table}:${p.documentId} — ${links[0].n} inbound link(s) appeared since planning`);
+    if (!p.merge) throw new Error(`refusing to prune ${p.table}:${p.documentId} without a merge plan`);
+    const { rows: targetRows } = await applyMerge(db, dialect, p.merge);
+    if (!targetRows || targetRows.length === 0) {
+      throw new Error(`merge produced no target rows for ${p.table}:${p.documentId}`);
     }
-    if (p.merge) {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const rowId of p.rowIds) {
       // eslint-disable-next-line no-await-in-loop
-      await applyMerge(db, dialect, p.merge);
+      const { repointed, deduped } = await repointLinks(db, dialect, inbound, rowId, targetRows);
+      repointedTotal += repointed;
+      dedupedTotal += deduped;
     }
     if (dialect === 'sqlite') {
       const phd = p.rowIds.map(() => '?').join(',');
@@ -414,7 +499,13 @@ async function applyPlan(db, dialect, plan, opts = {}) {
     pruned += 1;
   }
 
-  return { repaired: plan.repairs.length, pruned, snapshotPath: snapshotPath || null };
+  return {
+    repaired: plan.repairs.length,
+    pruned,
+    repointed: repointedTotal,
+    deduped: dedupedTotal,
+    snapshotPath: snapshotPath || null,
+  };
 }
 
 async function closeDb(db, dialect) {
@@ -479,7 +570,7 @@ async function main() {
     console.log(`[REPAIR]   ${r.table} ${r.documentId}: ${from} -> "${r.toSlug}" (${r.rowIds.length} row(s))`);
   }
   for (const p of plan.prunes) {
-    console.log(`[PRUNE]    ${p.table} ${p.documentId}: EN-only duplicate of ${p.duplicateOf}, slug "${p.slug}", ${p.rowIds.length} row(s), 0 inbound links — merges name "${p.merge?.name}" + published state onto the bilingual document`);
+    console.log(`[PRUNE]    ${p.table} ${p.documentId}: EN-only duplicate of ${p.duplicateOf}, slug "${p.slug}", ${p.rowIds.length} row(s) — merges name "${p.merge?.name}" + published state onto the bilingual document, inbound links repointed`);
   }
   console.log(`\nDocuments: ${plan.synced} already synced, ${plan.repairs.length} to repair, ${plan.prunes.length} to prune, ${plan.conflicts.length} conflict(s), ${plan.orphans.length} orphan(s) left.`);
 
@@ -505,8 +596,8 @@ async function main() {
     dialect === 'sqlite' ? path.dirname(loc) : process.cwd(),
     `slug-snapshot-${stamp}.json`
   );
-  const { repaired, pruned } = await applyPlan(db, dialect, plan, { snapshotPath, defaultLocale: DEFAULT_LOCALE });
-  console.log(`\nApplied: ${repaired} document(s) unified, ${pruned} EN-only duplicate(s) pruned.`);
+  const { repaired, pruned, repointed, deduped } = await applyPlan(db, dialect, plan, { snapshotPath, defaultLocale: DEFAULT_LOCALE });
+  console.log(`\nApplied: ${repaired} document(s) unified, ${pruned} EN-only duplicate(s) pruned, ${repointed} link(s) repointed, ${deduped} redundant link(s) removed.`);
   if (repaired + pruned > 0) console.log(`Snapshot (redirect map source): ${snapshotPath}`);
   console.log('Re-run without --apply to confirm everything is unified.');
   await closeDb(db, dialect);
@@ -520,4 +611,14 @@ if (require.main === module) {
   });
 }
 
-module.exports = { planUnify, fetchRows, applyPlan, openDb, closeDb, TABLES, DEFAULT_LOCALE };
+module.exports = {
+  planUnify,
+  fetchRows,
+  applyPlan,
+  applyMerge,
+  repointLinks,
+  openDb,
+  closeDb,
+  TABLES,
+  DEFAULT_LOCALE,
+};
