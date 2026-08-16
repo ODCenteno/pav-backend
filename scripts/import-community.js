@@ -191,17 +191,27 @@ function inferLocality(raw) {
 // social / phone parsing
 // ---------------------------------------------------------------------------
 
-function buildSocialLinks(row) {
-  const links = [];
-  const ig = (row["Instagram"] || "").trim();
-  if (ig && ig !== "-") links.push({ platform: "instagram", handle: ig, url: ig.startsWith("http") ? ig : undefined });
-  const fb = (row["Facebook"] || "").trim();
-  if (fb && fb !== "-") links.push({ platform: "facebook", handle: fb === "Facebook" ? undefined : fb });
-  const tk = (row["Tik tok"] || "").trim();
-  if (tk && tk !== "-") links.push({ platform: "tiktok", handle: tk });
-  const other = (row["Otro medio de contacto"] || "").trim();
-  if (other && other !== "-") links.push({ platform: "other", handle: other, url: other.startsWith("http") ? other : undefined });
-  return links;
+/**
+ * Builds the `contact.contact-info` component payload used by both
+ * community-members and listings (the old top-level phone/whatsapp/social
+ * attributes were removed from the schemas).
+ */
+function buildContactInfo(row, phone, whatsapp) {
+  const clean = (v) => {
+    const t = (v || "").trim();
+    return t && t !== "-" && t !== "Facebook" ? t : undefined;
+  };
+  const other = clean(row["Otro medio de contacto"]);
+  const contact = {
+    phone: phone || undefined,
+    whatsapp: whatsapp || undefined,
+    instagram: clean(row["Instagram"]),
+    facebook: clean(row["Facebook"]),
+    tiktok: clean(row["Tik tok"]),
+    website: other && other.startsWith("http") ? other : undefined,
+  };
+  Object.keys(contact).forEach((k) => contact[k] === undefined && delete contact[k]);
+  return Object.keys(contact).length ? contact : undefined;
 }
 
 function parsePhone(raw) {
@@ -251,7 +261,7 @@ async function main() {
     const locality = inferLocality(row["Localidad / Ubicación"]);
     const names = splitLines(row["Nombre de la persona / Tentativos"]);
     const { phone, whatsapp } = parsePhone(row["Teléfono / Whatsapp"]);
-    const social = buildSocialLinks(row);
+    const contact = buildContactInfo(row, phone, whatsapp);
     const slugs = [];
 
     for (const name of names) {
@@ -273,9 +283,7 @@ async function main() {
         name: cleanName,
         slug,
         locality,
-        phone,
-        whatsapp,
-        social,
+        contact,
       });
       memberBySlug[slug] = created.documentId || created.id;
       console.log(`  + member ${slug}`);
@@ -296,7 +304,8 @@ async function main() {
     const memberDocIds = (rowMembers[i]?.slugs || [])
       .map((s) => memberBySlug[s])
       .filter(Boolean);
-    const social = buildSocialLinks(row);
+    const { phone, whatsapp } = parsePhone(row["Teléfono / Whatsapp"]);
+    const contact = buildContactInfo(row, phone, whatsapp);
 
     for (let v = 0; v < ventures.length; v++) {
       const venture = ventures[v].replace(/^["']+|["']+$/g, "").trim();
@@ -351,7 +360,7 @@ async function main() {
         members: memberDocIds,
         stories,
         products,
-        social,
+        contact,
       };
       // drop undefined values
       Object.keys(data).forEach((k) => data[k] === undefined && delete data[k]);

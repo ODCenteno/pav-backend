@@ -130,7 +130,7 @@ async function strapiPost(pathname, data, locale) {
   const url = new URL(`${STRAPI_URL}/api${pathname}`);
   if (locale) url.searchParams.set("locale", locale);
   const res = await fetch(url.toString(), {
-    method: "PUT",
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ADMIN_TOKEN}`,

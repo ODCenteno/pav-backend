@@ -8,8 +8,8 @@
  *
  * Run AFTER `npm run develop` is up:
  *   STRAPI_URL=http://localhost:1337 \
- *   ADMIN_EMAIL=admin@pav.com \
- *   ADMIN_PASSWORD=Admin1234 \
+ *   ADMIN_EMAIL=<admin email> \
+ *   ADMIN_PASSWORD=<admin password> \
  *   node scripts/import-csv-listings.js
  *
  * - Idempotent: skips listings/members whose slug already exists.
@@ -43,8 +43,17 @@ if (fs.existsSync(envPath)) {
 }
 
 const STRAPI_URL = process.env.STRAPI_URL || "http://localhost:1337";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@pav.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin1234";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error(
+    "Missing ADMIN_EMAIL / ADMIN_PASSWORD environment variables.\n" +
+      "Set them explicitly (they are never defaulted here):\n" +
+      "  ADMIN_EMAIL=... ADMIN_PASSWORD=... node scripts/import-csv-listings.js"
+  );
+  process.exit(2);
+}
 
 // ---------------------------------------------------------------------------
 // admin auth
