@@ -1,0 +1,32 @@
+diff --git a/dist/strapi/providers/local-destination/strategies/restore/links.js b/dist/strapi/providers/local-destination/strategies/restore/links.js
+index e9cb2861065a85b6076d5d0d51c7c051d43c448a..a1cf5167d10a0a03867cc74b6493065a196ba173 100644
+--- a/dist/strapi/providers/local-destination/strategies/restore/links.js
++++ b/dist/strapi/providers/local-destination/strategies/restore/links.js
+@@ -32,15 +32,26 @@ const createLinksWriteStream = (mapID, strapi, transaction, onWarning)=>{
+         async write (link$1, _encoding, callback) {
+             await transaction?.attach(async (trx)=>{
+                 const { left, right } = link$1;
+-                const query = link.createLinkQuery(strapi, trx);
+                 const originalLeftRef = left.ref;
+                 const originalRightRef = right.ref;
+                 // Map IDs if needed
+                 left.ref = mapID(left.type, originalLeftRef) ?? originalLeftRef;
+                 right.ref = mapID(right.type, originalRightRef) ?? originalRightRef;
++                // PAV PATCH (savepoint per link insert): the FK-error skip path
++                // below assumes a failed statement does not kill the surrounding
++                // transaction. That is true on SQLite/MySQL but false on
++                // PostgreSQL, where the failed INSERT aborts the shared import
++                // transaction: every later statement fails with 25P02 and the
++                // whole import silently rolls back while reporting success.
++                // Running the insert inside a savepoint lets us roll back only
++                // the failed link on every dialect, keeping the skip semantics.
++                const savepoint = await trx.transaction();
++                const query = link.createLinkQuery(strapi, savepoint);
+                 try {
+                     await query().insert(link$1);
++                    await savepoint.commit();
+                 } catch (e) {
++                    await savepoint.rollback().catch(()=>{});
+                     if (e instanceof Error) {
+                         if (isForeignKeyConstraintError(e)) {
+                             onWarning?.(`Skipping link ${left.type}:${originalLeftRef} -> ${right.type}:${originalRightRef} due to a foreign key constraint.`);

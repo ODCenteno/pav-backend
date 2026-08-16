@@ -16,4 +16,5 @@ onlyBuiltDependencies:
 
 patchedDependencies:
   '@strapi/admin@5.39.0': patches/@strapi__admin@5.39.0.patch
+  '@strapi/data-transfer@5.39.0': patches/@strapi__data-transfer@5.39.0.patch
   sbp-google-map-field@1.1.1: patches/sbp-google-map-field@1.1.1.patch
