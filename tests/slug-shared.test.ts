@@ -123,7 +123,8 @@ describe('planUnify (slug unification planning)', () => {
     expect(prune.documentId).toBe('catB');
     expect(prune.duplicateOf).toBe('categories:catA');
     expect(prune.merge.name).toBe('Restaurants'); // translated name from the duplicate
-    expect(prune.merge.publishFromRowId).toBe(2); // draft EN shell gets published
+    expect(prune.merge.needsPublishClone).toBe(true); // draft EN shell gets a published clone
+    expect(prune.merge.dupDocumentId).toBe('catB');
   });
 
   it('leaves unique EN-only documents as orphans (untouched)', () => {
