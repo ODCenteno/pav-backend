@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import { subscribeSharedSlugSync } from './sync-shared-slug';
 
 const PUBLIC_PERMISSIONS = [
   'api::category.category.find',
@@ -26,6 +27,7 @@ export default {
   register() {},
 
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    subscribeSharedSlugSync(strapi);
     await seedPublicPermissions(strapi);
     await migrateSocialToContact(strapi);
   },

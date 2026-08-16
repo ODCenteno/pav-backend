@@ -23,9 +23,11 @@ export default defineConfig({
       reporter: ['text', 'json-summary'],
       include: [
         'src/index.ts',
+        'src/sync-shared-slug.ts',
         'src/api/site-content/**',
         'src/extensions/**',
         'scripts/validate-transfer.js',
+        'scripts/unify-locale-slugs.js',
       ],
     },
   },

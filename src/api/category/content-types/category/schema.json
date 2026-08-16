@@ -30,12 +30,7 @@
       "type": "uid",
       "targetField": "name",
       "required": true,
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "description": "Identificador único en la URL."
+      "description": "Identificador único en la URL. COMPARTIDO entre idiomas: mismo slug para español e inglés."
     },
     "color": {
       "type": "string",

@@ -28,14 +28,9 @@
     },
     "slug": {
       "type": "uid",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
       "targetField": "title",
       "required": true,
-      "description": "Identificador único en la URL. Se genera automáticamente a partir del título, pero puedes editarlo."
+      "description": "Identificador único en la URL. Se genera automáticamente a partir del título, pero puedes editarlo. Es COMPARTIDO entre idiomas: el mismo slug sirve para /sitios/<slug> y /en/sitios/<slug>."
     },
     "shortDescription": {
       "type": "text",

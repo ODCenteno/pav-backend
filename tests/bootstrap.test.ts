@@ -29,6 +29,7 @@ const EXPECTED_PUBLIC_PERMISSIONS = [
 
 function makeStrapi(opts: { listings?: any[]; members?: any[]; listingError?: Error } = {}) {
   const createdPermissions: any[] = [];
+  const lifecycleSubscribe = vi.fn();
 
   const roleFindOne = vi.fn(async () => ({ id: 42, type: 'public' }));
   const permissionFindOne = vi.fn(async ({ where }: any) =>
@@ -72,6 +73,7 @@ function makeStrapi(opts: { listings?: any[]; members?: any[]; listingError?: Er
             throw new Error(`unexpected db.query uid: ${uid}`);
         }
       }),
+      lifecycles: { subscribe: lifecycleSubscribe },
     },
     store: vi.fn(() => ({ get: storeGet, set: storeSet })),
     log: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
@@ -90,8 +92,17 @@ function makeStrapi(opts: { listings?: any[]; members?: any[]; listingError?: Er
     storeGet,
     storeSet,
     storeState,
+    lifecycleSubscribe,
   };
 }
+
+describe('bootstrap: shared-slug subscriber registration', () => {
+  it('registers exactly one db-lifecycle subscriber', async () => {
+    const fake = makeStrapi();
+    await bootstrap({ strapi: fake.strapi });
+    expect(fake.lifecycleSubscribe).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('bootstrap: public permission seeding', () => {
   it('seeds the full public permission list against the public role', async () => {
