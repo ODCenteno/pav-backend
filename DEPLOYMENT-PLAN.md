@@ -13,7 +13,7 @@ Visitors (PWA, SW)
         ▼ HTTPS
 ┌─────────────────────────────────────────────────────────────┐
 │  Cloudflare Workers (Astro SSR, pav-frontend)              │
-│  • Cache API shared cache (caches.default)                 │
+│  • Prerendered pages + in-memory request cache (60s TTL)   │
 │  • Service Worker: nav=navigate, img=CacheFirst, api=SWR   │
 │  • Webhook receiver: POST /api/revalidate → repo rebuild   │
 └────────────┬────────────────────────────────────────────────┘
@@ -51,7 +51,7 @@ Strapi `entry.publish` / `entry.unpublish` / `entry.delete` → `POST https://<f
 | Area | Decision |
 |---|---|
 | Frontend render mode | Statically-prerendered site + **rebuild webhook** (`repository_dispatch` → full frontend rebuild, §10) |
-| Frontend cache layer | Upgrade `cms.ts` to **Cloudflare Cache API** (`caches.default`) |
+| Frontend cache layer | `cms.ts` in-memory `Map` cache (60 s TTL) kept as-is — the Cloudflare Cache API upgrade was never implemented; content freshness comes from the rebuild webhook (§10) |
 | Image optimization | **R2 bucket + Image Resizing Worker** (free tier, 5k transforms/mo) |
 | Database migration | `npx @strapi/data-transfer` export → import |
 | Domains | Use defaults (env-parameterized; fill production values later) |
@@ -319,29 +319,23 @@ services:
 ```typescript
 import { randomBytes } from 'node:crypto';
 
-const keys = Array.from({ length: 2 }, () =>
-  randomBytes(32).toString('base64')
-).join(',');
+const b64 = () => randomBytes(32).toString('base64');
 
-const out: Record<string, string> = {
-  APP_KEYS: `"${keys}"`,
-  ADMIN_JWT_SECRET: randomBytes(32).toString('base64'),
-  API_TOKEN_SALT: randomBytes(32).toString('base64'),
-  TRANSFER_TOKEN_SALT: randomBytes(32).toString('base64'),
-  JWT_SECRET: randomBytes(32).toString('base64'),
-  ENCRYPTION_KEY: randomBytes(32).toString('base64'),
+const secrets = {
+  APP_KEYS: `${b64()},${b64()}`,
+  ADMIN_JWT_SECRET: b64(),
+  API_TOKEN_SALT: b64(),
+  TRANSFER_TOKEN_SALT: b64(),
+  // Consumed by config/plugins.ts (users-permissions). Distinct from
+  // ADMIN_JWT_SECRET so admin and users-permissions tokens never share a key.
+  USERS_PERMISSIONS_JWT_SECRET: b64(),
+  ENCRYPTION_KEY: b64(),
 };
-
-console.log('# Strapi secrets — paste into Koyeb env vars (secret type)\n');
-for (const [k, v] of Object.entries(out)) {
-  console.log(`${k}=${v}`);
-}
-
-// NOT a backend env var — generate once, then:
-//   1. store as the `pav-frontend` GitHub Actions secret REVALIDATE_WEBHOOK_SECRET
-//   2. paste into the Strapi webhook header (Settings → Webhooks, §10)
-console.log(`\nREVALIDATE_WEBHOOK_SECRET=${randomBytes(24).toString('hex')}`);
 ```
+
+The script prints each secret as `KEY=value` for the Koyeb dashboard, followed by the non-secret env vars that must accompany them (`NODE_ENV`, `HOST`, `PORT`, `IS_BEHIND_PROXY`, `STRAPI_TELEMETRY_DISABLED`, `NODE_OPTIONS`).
+
+> **Revalidation secret** — `REVALIDATE_WEBHOOK_SECRET` is NOT generated or consumed by the backend. Generate any 24-byte hex value once (e.g. `randomBytes(24).toString('hex')`), store it as the `pav-frontend` GitHub Actions secret `REVALIDATE_WEBHOOK_SECRET`, and paste the same value into the Strapi webhook header (Settings → Webhooks, §10).
 
 Run: `npx tsx scripts/generate-secrets.ts`
 
@@ -393,7 +387,7 @@ Exact names matching the actual code. Mark sensitive values as **secret** in the
 | `ADMIN_JWT_SECRET` | `base64...` | 🔒 secret |
 | `API_TOKEN_SALT` | `base64...` | 🔒 secret |
 | `TRANSFER_TOKEN_SALT` | `base64...` | 🔒 secret |
-| `JWT_SECRET` | `base64...` | 🔒 secret |
+| `USERS_PERMISSIONS_JWT_SECRET` | `base64...` | 🔒 secret — users-permissions plugin (`config/plugins.ts`); distinct from `ADMIN_JWT_SECRET` |
 | `ENCRYPTION_KEY` | `base64...` | 🔒 secret |
 
 ### Integration
@@ -788,7 +782,7 @@ Run these after the Koyeb deploy is healthy.
 | Document | Scope |
 |---|---|
 | `RBAC-EMAIL-PLAN.md` | Role-Based Access Control: Owner role, ownership policies, Resend email integration, invite/reset flows, bootstrap seed, seed-owners script |
-| `FRONTEND-DEPLOYMENT.md` | Frontend changes: webhook receiver, cms.ts Cache API upgrade, CSP hardening, SW versioning, **Owner Portal** (login, mi-panel, auth middleware) · ⚠️ revalidation design superseded — see banner in that doc |
+| `FRONTEND-DEPLOYMENT.md` | Frontend changes: webhook receiver, cms.ts Cache API upgrade, CSP hardening, SW versioning, **Owner Portal** (login, mi-panel, auth middleware) · ⚠️ revalidation + cache design superseded — see banner in that doc |
 | `R2-integration-plan.md` | Original R2 integration research and decisions (historical) |
 | `README.md` | Project overview, local dev setup |
 | `.env.example` | All env var names and placeholder values |

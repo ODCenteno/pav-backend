@@ -3,8 +3,8 @@
 **Repository:** `pav-frontend` (Astro 7, React 19, Cloudflare Workers adapter)
 **Scope:** Changes required in `pav-frontend` to satisfy the backend → frontend contract and PWA/offline requirements.
 
-> ⚠️ **STATUS: SUPERSEDED** — The revalidation mechanism described below (cache purge via `WEBHOOK_SECRET`) was superseded during implementation. The shipped endpoint validates `X-Webhook-Secret` against `REVALIDATE_WEBHOOK_SECRET` (a GitHub Actions secret inlined into the Worker bundle at build time) and fires a GitHub `repository_dispatch` (event `cms-revalidate`) that triggers a full frontend rebuild + redeploy — the rebuild is what makes new CMS content visible.
-> Source of truth: `pav-frontend` `src/pages/api/revalidate.ts`. The rest of this document is preserved as a historical record.
+> ⚠️ **STATUS: SUPERSEDED** — The revalidation mechanism described below (cache purge via `WEBHOOK_SECRET`) was superseded during implementation. The shipped endpoint validates `X-Webhook-Secret` against `REVALIDATE_WEBHOOK_SECRET` (a GitHub Actions secret inlined into the Worker bundle at build time) and fires a GitHub `repository_dispatch` (event `cms-revalidate`) that triggers a full frontend rebuild + redeploy — the rebuild is what makes new CMS content visible. The Cloudflare Cache API upgrade for `cms.ts` described below was also never implemented: the shipped frontend keeps the in-memory `Map` request cache (60 s TTL), and content freshness comes from the rebuild.
+> Source of truth: `pav-frontend` `src/pages/api/revalidate.ts` and `src/lib/cms.ts`. The rest of this document is preserved as a historical record.
 
 > This document references frontend-side changes (implemented in the `pav-frontend` repo). It is committed to `pav-backend` as a historical reference.
 

@@ -34,7 +34,7 @@ Copy `.env.example` → `.env` and fill in all values. Key variables:
 | `ADMIN_JWT_SECRET` | Admin auth secret |
 | `API_TOKEN_SALT` | API token salt |
 | `TRANSFER_TOKEN_SALT` | Transfer token salt |
-| `JWT_SECRET` | JWT secret |
+| `USERS_PERMISSIONS_JWT_SECRET` | users-permissions plugin secret (falls back to `ADMIN_JWT_SECRET` when unset) |
 | `ENCRYPTION_KEY` | Strapi encryption key |
 | `DATABASE_CLIENT` | `sqlite` (dev) or `postgres` (prod) |
 | `DATABASE_FILENAME` | SQLite DB path (dev; e.g. `.tmp/data.db`) |
