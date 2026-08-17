@@ -15,7 +15,7 @@ Visitors (PWA, SW)
 │  Cloudflare Workers (Astro SSR, pav-frontend)              │
 │  • Cache API shared cache (caches.default)                 │
 │  • Service Worker: nav=navigate, img=CacheFirst, api=SWR   │
-│  • Webhook receiver: POST /api/revalidate → cache purge   │
+│  • Webhook receiver: POST /api/revalidate → repo rebuild   │
 └────────────┬────────────────────────────────────────────────┘
              │ HTTPS GET / POST
              ▼
@@ -42,7 +42,7 @@ Visitors (PWA, SW)
 ```
 
 **Webhook flow:**
-Strapi `entry.publish` / `entry.unpublish` → `POST https://<frontend>/api/revalidate` (header `X-Webhook-Secret`) → Cloudflare Workers purges shared Cache API keys → next request re-fetches fresh data from Strapi.
+Strapi `entry.publish` / `entry.unpublish` / `entry.delete` → `POST https://<frontend>/api/revalidate` (header `X-Webhook-Secret`) → the Worker validates the secret and fires a GitHub `repository_dispatch` (event `cms-revalidate`) → the Deploy workflow rebuilds and redeploys the statically-prerendered frontend → new content is live.
 
 ---
 
@@ -50,7 +50,7 @@ Strapi `entry.publish` / `entry.unpublish` → `POST https://<frontend>/api/reva
 
 | Area | Decision |
 |---|---|
-| Frontend render mode | Astro SSR (unchanged) + **cache-purge webhook** |
+| Frontend render mode | Statically-prerendered site + **rebuild webhook** (`repository_dispatch` → full frontend rebuild, §10) |
 | Frontend cache layer | Upgrade `cms.ts` to **Cloudflare Cache API** (`caches.default`) |
 | Image optimization | **R2 bucket + Image Resizing Worker** (free tier, 5k transforms/mo) |
 | Database migration | `npx @strapi/data-transfer` export → import |
@@ -144,7 +144,7 @@ export default config;
 ```
 
 - R2 domain is read from `R2_PUBLIC_BASE_URL` env var — no hardcoded secrets in source.
-- `strapi::cors` is scoped to `FRONTEND_URL` (or `*` in dev); the `X-Webhook-Secret` header is whitelisted for the cache-purge webhook.
+- `strapi::cors` is scoped to `FRONTEND_URL` (or `*` in dev); the `X-Webhook-Secret` header is whitelisted for the frontend revalidation webhook.
 
 ### 3.3 `config/plugins.ts` — NO CHANGE
 
@@ -330,13 +330,17 @@ const out: Record<string, string> = {
   TRANSFER_TOKEN_SALT: randomBytes(32).toString('base64'),
   JWT_SECRET: randomBytes(32).toString('base64'),
   ENCRYPTION_KEY: randomBytes(32).toString('base64'),
-  WEBHOOK_SECRET: randomBytes(24).toString('hex'),
 };
 
 console.log('# Strapi secrets — paste into Koyeb env vars (secret type)\n');
 for (const [k, v] of Object.entries(out)) {
   console.log(`${k}=${v}`);
 }
+
+// NOT a backend env var — generate once, then:
+//   1. store as the `pav-frontend` GitHub Actions secret REVALIDATE_WEBHOOK_SECRET
+//   2. paste into the Strapi webhook header (Settings → Webhooks, §10)
+console.log(`\nREVALIDATE_WEBHOOK_SECRET=${randomBytes(24).toString('hex')}`);
 ```
 
 Run: `npx tsx scripts/generate-secrets.ts`
@@ -397,8 +401,9 @@ Exact names matching the actual code. Mark sensitive values as **secret** in the
 | Key | Example value | Notes |
 |---|---|---|
 | `FRONTEND_URL` | `https://guiacomunidadesloretanas.com` | For CORS + invite/reset email links |
-| `WEBHOOK_SECRET` | `hex...` | 🔒 secret; copy to frontend `WEBHOOK_SECRET` env |
 | `STRAPI_TELEMETRY_DISABLED` | `true` | Opt out of Strapi anonymous telemetry |
+
+> The revalidation webhook secret is **not** a backend env var. It is generated once (§4.4), stored as the `pav-frontend` GitHub Actions secret `REVALIDATE_WEBHOOK_SECRET` (inlined into the Worker bundle at build time), and pasted into the Strapi webhook `X-Webhook-Secret` header (§10).
 
 ### Email (Resend SMTP via Nodemailer)
 
@@ -541,7 +546,7 @@ Do these in the dashboards before deploying.
   - [ ] Verify: `curl "https://<worker>/image-resize/<file>?w=400" -I` returns 200 with `Cache-Control`
 - [ ] **Koyeb**: account created, GitHub repo connected, eco-small enabled
 - [ ] **Secrets**: run `npx tsx scripts/generate-secrets.ts` locally → paste into Koyeb dashboard (mark secret)
-- [ ] **Webhook secret shared with frontend**: one of the generated `WEBHOOK_SECRET` values is copied to `pav-frontend` `WEBHOOK_SECRET` env
+- [ ] **Revalidation secret shared**: the generated `REVALIDATE_WEBHOOK_SECRET` value is saved as a `pav-frontend` GitHub Actions secret **and** pasted into the Strapi webhook `X-Webhook-Secret` header (§10)
 
 ---
 
@@ -625,12 +630,14 @@ After first successful Koyeb deploy + migration:
 
    | Field | Value |
    |---|---|
-   | Name | `Frontend cache purge` |
+   | Name | `pav_frontend_revalidate` |
    | URL | `https://guiacomunidadesloretanas.com/api/revalidate` |
-   | Headers | `X-Webhook-Secret: <WEBHOOK_SECRET>` |
-   | Events | ✅ `entry.publish` · ✅ `entry.unpublish` |
+   | Headers | `X-Webhook-Secret: <REVALIDATE_WEBHOOK_SECRET value>` |
+   | Events | ✅ `entry.publish` · ✅ `entry.unpublish` · ✅ `entry.delete` |
 
-   > **Only `entry.publish` and `entry.unpublish`** — these fire only when content goes live. `entry.create` / `entry.update` fire on every draft save and would hit the Cloudflare Workers free-tier request limit (100k/day).
+   > **Only `entry.publish`, `entry.unpublish`, and `entry.delete`** — these fire on real content-state changes. `entry.create` / `entry.update` fire on every draft save and would trigger wasted full frontend rebuilds.
+
+   ✅ This webhook is already configured and verified end-to-end in production (2026-08-16).
 
 4. **Settings → Users & Permissions → Roles → Public**: verify the 16 actions (find / findOne for all content types) are granted. If missing, any API call to Strapi triggers the bootstrap in `src/index.ts`.
 
@@ -695,8 +702,8 @@ After first successful Koyeb deploy + migration:
 | 12 | `rejectUnauthorized: false` | Default is `true`; set `DATABASE_SSL_REJECT_UNAUTHORIZED=true` (§5) |
 | 13 | Build artifacts in git | Avoided via Dockerfile multi-stage build |
 | 14 | `--max-old-space-size=400` too low for 1 GB | Set `768` (room for OS + native on 1 GB eco-small) |
-| 15 | Deploy hook URL in plaintext DB | Webhook sends `X-Webhook-Secret` header; URL itself is not a secret |
-| 16 | `Update` webhook too broad | Only `entry.publish` + `entry.unpublish` (§10) |
+| 15 | Rebuild trigger URL in plaintext DB | Revalidation webhook authenticates with `X-Webhook-Secret` header (matches frontend `REVALIDATE_WEBHOOK_SECRET`); URL itself is not a secret |
+| 16 | `Update` webhook too broad | Only `entry.publish` + `entry.unpublish` + `entry.delete` (§10) |
 | 17 | No SQLite → Postgres migration | data-transfer export → import procedure (§8) |
 | 18 | Admin settings reset on fresh DB | Re-disable "Responsive friendly upload" + "Size optimization" after migration (§10) |
 | 19 | No health check | `HEALTHCHECK` in Dockerfile hits built-in `/_health` (§4.1) |
@@ -716,7 +723,7 @@ These guarantees allow the frontend PWA to function correctly.
 | Navigation works offline | SW `navigate` strategy: network → cache → `/offline` → `/` | ✅ Already in `public/sw.js` |
 | Slow network resilience | API paginated (default 25, max 100) | ✅ Already in `config/api.ts` |
 | Health / uptime monitoring | `GET /_health` → 204 when Strapi is ready | ✅ Built-in Strapi v5 |
-| Content updates propagate (near real-time) | Webhook purges Cloudflare Cache API → next request fetches fresh | ✅ §10 + FRONTEND-DEPLOYMENT.md |
+| Content updates propagate | Webhook (publish/unpublish/delete) fires `repository_dispatch` → frontend rebuild + redeploy with fresh content | ✅ §10 + FRONTEND-DEPLOYMENT.md |
 
 ---
 
@@ -747,7 +754,7 @@ Run these after the Koyeb deploy is healthy.
 - [ ] Koyeb logs: no `DATABASE_SSL` warnings; no `pool exhaustion`; no OOM
 - [ ] Koyeb metrics: RAM < 700 MB steady state; no restart loops
 - [ ] Neon dashboard: 1 connection at idle, ≤5 under load
-- [ ] Webhook test: publish a listing → Cloudflare Workers logs show `POST /api/revalidate` 200
+- [ ] Webhook test: publish a listing → `POST /api/revalidate` returns **202** and fires GitHub `repository_dispatch` (`cms-revalidate`) → Deploy workflow run rebuilds + redeploys the frontend
 - [ ] Browser offline: navigate to site → SW intercepts → stale content renders from cache
 - [ ] Lighthouse PWA audit: installable, service worker active, offline test passes
 - [ ] CORS preflight: `curl -X OPTIONS -H "Origin: https://guiacomunidadesloretanas.com" -H "Access-Control-Request-Method: GET" https://<koyeb-url>/api/listings -I` → `Access-Control-Allow-Origin` matches
@@ -768,7 +775,7 @@ Run these after the Koyeb deploy is healthy.
 | 1 | Neon cold start (~1–2 s on first request after idle) | Medium | Accept for free tier; upgrade compute if SLA needed |
 | 2 | Admin panel build OOM on eco-small (~900 MB peak) | Low | If OOM: build admin panel in GitHub Actions CI, push image to Koyeb Container Registry, pull in runner stage |
 | 3 | CF Image Resizing >5k transforms/mo | Low | Monitor in Cloudflare dashboard; R2 URLs are still valid without transforms |
-| 4 | Webhook secret drift (backend ≠ frontend) | Low | Store secret in both Koyeb and Workers env; document in ops runbook |
+| 4 | Revalidation secret drift (Strapi webhook header ≠ frontend build secret) | Low | Generate once, store as `pav-frontend` GitHub secret `REVALIDATE_WEBHOOK_SECRET`, paste the same value into the Strapi webhook header; rotating requires a frontend redeploy |
 | 5 | `better-sqlite3` native module breaks alpine image | Low | Runner stage doesn't load it (dev dep); `pg` is pure JS + native SSL via Node |
 | 6 | `pub-*.r2.dev` URL changes (Cloudflare rotates it) | Very Low | Switch `R2_PUBLIC_BASE_URL` to Worker URL (stable) once §6 deployed |
 | 7 | Resend free tier exceeded (3,000 emails/mo) | Very Low | Monitor Resend dashboard; upgrade to paid tier or switch provider |
@@ -781,11 +788,11 @@ Run these after the Koyeb deploy is healthy.
 | Document | Scope |
 |---|---|
 | `RBAC-EMAIL-PLAN.md` | Role-Based Access Control: Owner role, ownership policies, Resend email integration, invite/reset flows, bootstrap seed, seed-owners script |
-| `FRONTEND-DEPLOYMENT.md` | Frontend changes: webhook receiver, cms.ts Cache API upgrade, CSP hardening, SW versioning, **Owner Portal** (login, mi-panel, auth middleware) |
+| `FRONTEND-DEPLOYMENT.md` | Frontend changes: webhook receiver, cms.ts Cache API upgrade, CSP hardening, SW versioning, **Owner Portal** (login, mi-panel, auth middleware) · ⚠️ revalidation design superseded — see banner in that doc |
 | `R2-integration-plan.md` | Original R2 integration research and decisions (historical) |
 | `README.md` | Project overview, local dev setup |
 | `.env.example` | All env var names and placeholder values |
 
 ---
 
-*Last updated: 2026-07-08 · aligned with RBAC-EMAIL-PLAN.md · pav-backend main*
+*Last updated: 2026-08-16 · aligned with RBAC-EMAIL-PLAN.md and the shipped rebuild-based revalidation design · pav-backend main*

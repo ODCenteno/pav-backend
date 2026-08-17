@@ -3,7 +3,10 @@
 **Repository:** `pav-frontend` (Astro 7, React 19, Cloudflare Workers adapter)
 **Scope:** Changes required in `pav-frontend` to satisfy the backend → frontend contract and PWA/offline requirements.
 
-> This document is a reference for the frontend changes. It is **not committed to `pav-backend`** — implement these changes in the `pav-frontend` repo.
+> ⚠️ **STATUS: SUPERSEDED** — The revalidation mechanism described below (cache purge via `WEBHOOK_SECRET`) was superseded during implementation. The shipped endpoint validates `X-Webhook-Secret` against `REVALIDATE_WEBHOOK_SECRET` (a GitHub Actions secret inlined into the Worker bundle at build time) and fires a GitHub `repository_dispatch` (event `cms-revalidate`) that triggers a full frontend rebuild + redeploy — the rebuild is what makes new CMS content visible.
+> Source of truth: `pav-frontend` `src/pages/api/revalidate.ts`. The rest of this document is preserved as a historical record.
+
+> This document references frontend-side changes (implemented in the `pav-frontend` repo). It is committed to `pav-backend` as a historical reference.
 
 ---
 
@@ -808,4 +811,4 @@ Replace `<koyeb-url>` with the Koyeb app URL (e.g. `pav-backend-xxx.koyeb.app`).
 
 ---
 
-*Reference only — not part of `pav-backend`. Last updated: 2026-07-08 · aligned with RBAC-EMAIL-PLAN.md §11*
+*Historical reference — committed to `pav-backend`; the frontend-side changes it describes live in `pav-frontend`. Last updated: 2026-07-08 · aligned with RBAC-EMAIL-PLAN.md §11*

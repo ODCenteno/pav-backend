@@ -50,7 +50,6 @@ Copy `.env.example` → `.env` and fill in all values. Key variables:
 | `R2_SECRET_ACCESS_KEY` | R2 API token secret |
 | `R2_BUCKET` | R2 bucket name (e.g. `pav-assets`) |
 | `R2_PUBLIC_BASE_URL` | Public URL for R2 bucket (R2.dev URL or custom domain) |
-| `WEBHOOK_SECRET` | Shared secret for the frontend cache-purge webhook |
 | `SMTP_HOST` / `SMTP_PORT` | SMTP server host and port (e.g. `smtp.resend.com` / `465`) |
 | `SMTP_USER` / `SMTP_PASS` | SMTP auth credentials |
 | `EMAIL_FROM` | Sender address (e.g. `PAV <no-reply@mail.puertoaguaverde.mx>`) |
@@ -106,3 +105,23 @@ pnpm seed         # Run the seed script (populates initial data)
 Strapi supports multiple deployment targets. See the [Strapi deployment docs](https://docs.strapi.io/dev-docs/deployment) for options (Strapi Cloud, Node server, Docker, etc.).
 
 For production, switch `DATABASE_CLIENT` to `postgres` and set the corresponding `DATABASE_*` env vars.
+
+## Frontend revalidation webhook
+
+Content changes go live by triggering a full frontend rebuild. The webhook is configured in the **Strapi admin UI** (Settings → Webhooks) and stored in Strapi's database — the backend consumes **no env var** for it.
+
+| Field | Value |
+|---|---|
+| Name | `pav_frontend_revalidate` |
+| URL | `https://guiacomunidadesloretanas.com/api/revalidate` |
+| Header | `X-Webhook-Secret` — must match the frontend's `REVALIDATE_WEBHOOK_SECRET` GitHub Actions secret |
+| Events | ✅ `entry.publish` · ✅ `entry.unpublish` · ✅ `entry.delete` |
+
+On a valid secret, the frontend fires a GitHub `repository_dispatch` (event `cms-revalidate`) to `ODCenteno/pav-frontend`; the Deploy workflow rebuilds and redeploys the statically-prerendered site — the rebuild is what makes new CMS content visible.
+
+- `entry.update` is intentionally excluded: it fires on every draft save and would trigger wasted rebuilds (all content types are draftAndPublish).
+- `REVALIDATE_WEBHOOK_SECRET` is baked into the Worker bundle at build time; rotating it requires updating the Strapi webhook header **and** redeploying the frontend.
+- Response codes: **202** dispatch fired · **401** secret mismatch · **502** dispatch failed · **503** env vars missing at build time.
+- Cloudflare WAF requires `Content-Type: application/json` on POSTs — Strapi sends JSON natively, so requests pass.
+
+Source of truth: `pav-frontend` `src/pages/api/revalidate.ts`.
