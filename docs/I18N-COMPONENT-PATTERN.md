@@ -2,7 +2,17 @@
 
 **File:** `docs/I18N-COMPONENT-PATTERN.md`
 **Context:** Strapi v5 · `pav-backend` · Localized listing content types
-**Status: Known UX issue — fix is deferred pending decision**
+**Status: RESOLVED — Option A implemented (2026-08) via expand/contract migration**
+
+> **Resolution:** The dual `*_es`/`*_en` pattern described below has been
+> replaced. `tag-item`, `hours`, and `localized-text` now carry a single
+> localized field (`label`/`text`); `listing.amenities` and
+> `listing.recommendations` moved to new flexible components
+> (`amenity.amenity-item` with label + content, and
+> `recommendation.recommendation-item` with label + description, both
+> mirroring `product.item`). Editors see exactly one field per locale.
+> Production deploy procedure: `docs/LOCALE-COMPONENT-MIGRATION-RUNBOOK.md`.
+> The rest of this document is kept as historical context.
 
 ---
 
@@ -146,9 +156,10 @@ So the frontend is agnostic to which approach is used. Any fix to the schema is 
 
 ## 6. Recommended Next Step
 
-**Option A** is the architecturally correct fix and should be implemented when the team has bandwidth for a staged deployment (migration first, then frontend update). Assign to the next sprint.
-
-If a faster fix is needed now, **Option B** addresses the UX pain without touching schemas or data.
+**RESOLVED (2026-08):** Option A was implemented with an expand/contract
+deploy strategy and a two-phase migration script
+(`scripts/migrate-locale-components.js`). See
+`docs/LOCALE-COMPONENT-MIGRATION-RUNBOOK.md` for the production procedure.
 
 ---
 
@@ -167,4 +178,4 @@ If a faster fix is needed now, **Option B** addresses the UX pain without touchi
 
 ---
 
-*Last updated: 2026-08-02*
+*Last updated: 2026-08-22 (resolution banner added; original analysis from 2026-08-02)*
