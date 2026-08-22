@@ -145,3 +145,4 @@ skills-lock.json
 
 # Local agent tooling
 .atl/
+.codegraph/

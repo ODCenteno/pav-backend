@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_recommendation_recommendation_items",
+  "info": {
+    "displayName": "Recomendación",
+    "description": "Una recomendación para visitantes: título y descripción (mejor época, qué llevar, accesibilidad, conectividad).",
+    "icon": "star",
+    "singularName": "recommendation-item",
+    "pluralName": "recommendation-items"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título de la recomendación. Ejemplo: Mejor época para visitar, Qué llevar."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Contenido de la recomendación en el idioma de la entrada."
+    }
+  }
+}

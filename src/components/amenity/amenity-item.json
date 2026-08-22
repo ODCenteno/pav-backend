@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_amenity_amenity_items",
+  "info": {
+    "displayName": "Amenidad del Lugar",
+    "description": "Etiqueta y descripción de una amenidad o servicio del lugar.",
+    "icon": "check",
+    "singularName": "amenity-item",
+    "pluralName": "amenity-items"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Nombre de la amenidad o servicio. Ejemplo: Baños, Estacionamiento, Wifi."
+    },
+    "content": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción opcional de la amenidad o servicio."
+    }
+  }
+}

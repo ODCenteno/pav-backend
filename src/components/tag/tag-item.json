@@ -9,6 +9,16 @@
   },
   "options": {},
   "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto de la etiqueta en el idioma de la entrada."
+    },
     "label_es": {
       "type": "string",
       "required": true,

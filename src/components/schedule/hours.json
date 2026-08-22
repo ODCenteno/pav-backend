@@ -9,6 +9,15 @@
   },
   "options": {},
   "attributes": {
+    "text": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Horario en el idioma de la entrada."
+    },
     "text_es": {
       "type": "text",
       "description": "Horario en español. Ejemplo: Lunes a viernes, 8:00 AM - 5:00 PM. Sábados 9:00 AM - 2:00 PM."

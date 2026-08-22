@@ -98,6 +98,32 @@ export interface AboutValuesBlock extends Struct.ComponentSchema {
   };
 }
 
+export interface AmenityAmenityItem extends Struct.ComponentSchema {
+  collectionName: 'components_amenity_amenity_items';
+  info: {
+    description: 'Etiqueta y descripci\u00F3n de una amenidad o servicio del lugar.';
+    displayName: 'Amenidad del Lugar';
+    icon: 'check';
+    pluralName: 'amenity-items';
+    singularName: 'amenity-item';
+  };
+  attributes: {
+    content: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
 export interface CommonLocalizedText extends Struct.ComponentSchema {
   collectionName: 'components_common_localized_texts';
   info: {
@@ -108,6 +134,12 @@ export interface CommonLocalizedText extends Struct.ComponentSchema {
     singularName: 'localized-text';
   };
   attributes: {
+    text: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     text_en: Schema.Attribute.Text;
     text_es: Schema.Attribute.Text & Schema.Attribute.Required;
   };
@@ -642,6 +674,33 @@ export interface QuickfactQuickFact extends Struct.ComponentSchema {
   };
 }
 
+export interface RecommendationRecommendationItem
+  extends Struct.ComponentSchema {
+  collectionName: 'components_recommendation_recommendation_items';
+  info: {
+    description: 'Una recomendaci\u00F3n para visitantes: t\u00EDtulo y descripci\u00F3n (mejor \u00E9poca, qu\u00E9 llevar, accesibilidad, conectividad).';
+    displayName: 'Recomendaci\u00F3n';
+    icon: 'star';
+    pluralName: 'recommendation-items';
+    singularName: 'recommendation-item';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
 export interface RecommendationVisitInfo extends Struct.ComponentSchema {
   collectionName: 'components_recommendation_visit_infos';
   info: {
@@ -673,6 +732,12 @@ export interface ScheduleHours extends Struct.ComponentSchema {
     singularName: 'hours';
   };
   attributes: {
+    text: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     text_en: Schema.Attribute.Text;
     text_es: Schema.Attribute.Text;
   };
@@ -754,6 +819,13 @@ export interface TagTagItem extends Struct.ComponentSchema {
     singularName: 'tag-item';
   };
   attributes: {
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     label_en: Schema.Attribute.String;
     label_es: Schema.Attribute.String & Schema.Attribute.Required;
   };
@@ -764,6 +836,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'about.collaboration-block': AboutCollaborationBlock;
       'about.values-block': AboutValuesBlock;
+      'amenity.amenity-item': AmenityAmenityItem;
       'common.localized-text': CommonLocalizedText;
       'contact.contact-info': ContactContactInfo;
       'contact.links': ContactLinks;
@@ -783,6 +856,7 @@ declare module '@strapi/strapi' {
       'map.map-section': MapMapSection;
       'product.item': ProductItem;
       'quickfact.quick-fact': QuickfactQuickFact;
+      'recommendation.recommendation-item': RecommendationRecommendationItem;
       'recommendation.visit-info': RecommendationVisitInfo;
       'schedule.hours': ScheduleHours;
       'section.section-header': SectionSectionHeader;
