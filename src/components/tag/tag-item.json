@@ -17,16 +17,7 @@
           "localized": true
         }
       },
-      "description": "Texto de la etiqueta en el idioma de la entrada."
-    },
-    "label_es": {
-      "type": "string",
-      "required": true,
-      "description": "Texto en español. Ejemplo: Aventura, Mar, Familia."
-    },
-    "label_en": {
-      "type": "string",
-      "description": "Texto en inglés. Opcional: si está vacío, se usará el texto en español."
+      "description": "Texto de la etiqueta en el idioma de la entrada. Ejemplo: Aventura, Mar, Familia."
     }
   }
 }

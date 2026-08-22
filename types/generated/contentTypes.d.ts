@@ -1087,7 +1087,7 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    amenities: Schema.Attribute.Component<'tag.tag-item', true> &
+    amenities: Schema.Attribute.Component<'amenity.amenity-item', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1138,8 +1138,8 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
       }>;
     publishedAt: Schema.Attribute.DateTime;
     recommendations: Schema.Attribute.Component<
-      'recommendation.visit-info',
-      false
+      'recommendation.recommendation-item',
+      true
     > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {

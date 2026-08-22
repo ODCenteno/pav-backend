@@ -16,15 +16,7 @@
           "localized": true
         }
       },
-      "description": "Horario en el idioma de la entrada."
-    },
-    "text_es": {
-      "type": "text",
-      "description": "Horario en español. Ejemplo: Lunes a viernes, 8:00 AM - 5:00 PM. Sábados 9:00 AM - 2:00 PM."
-    },
-    "text_en": {
-      "type": "text",
-      "description": "Horario en inglés. Ejemplo: Monday to Friday, 8:00 AM - 5:00 PM. Saturdays 9:00 AM - 2:00 PM."
+      "description": "Horario en el idioma de la entrada. Ejemplo: Lunes a viernes, 8:00 AM - 5:00 PM. Sábados 9:00 AM - 2:00 PM."
     }
   }
 }

@@ -145,24 +145,24 @@
     "amenities": {
       "type": "component",
       "repeatable": true,
-      "component": "tag.tag-item",
+      "component": "amenity.amenity-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       },
-      "description": "Servicios e incluyos disponibles para el visitante. Agrega un servicio por elemento."
+      "description": "Servicios e incluyos disponibles para el visitante (etiqueta + descripción opcional). Agrega uno por elemento."
     },
     "recommendations": {
       "type": "component",
-      "repeatable": false,
-      "component": "recommendation.visit-info",
+      "repeatable": true,
+      "component": "recommendation.recommendation-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       },
-      "description": "Recomendaciones para visitantes: mejor época, qué llevar, accesibilidad y conectividad."
+      "description": "Recomendaciones para visitantes: mejor época, qué llevar, accesibilidad y conectividad (título + descripción)."
     },
     "relatedListings": {
       "type": "relation",

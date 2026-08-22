@@ -135,13 +135,12 @@ export interface CommonLocalizedText extends Struct.ComponentSchema {
   };
   attributes: {
     text: Schema.Attribute.Text &
+      Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    text_en: Schema.Attribute.Text;
-    text_es: Schema.Attribute.Text & Schema.Attribute.Required;
   };
 }
 
@@ -738,8 +737,6 @@ export interface ScheduleHours extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
-    text_en: Schema.Attribute.Text;
-    text_es: Schema.Attribute.Text;
   };
 }
 
@@ -826,8 +823,6 @@ export interface TagTagItem extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
-    label_en: Schema.Attribute.String;
-    label_es: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 

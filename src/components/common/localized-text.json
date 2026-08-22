@@ -11,21 +11,13 @@
   "attributes": {
     "text": {
       "type": "text",
+      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       },
       "description": "Texto en el idioma de la entrada."
-    },
-    "text_es": {
-      "type": "text",
-      "required": true,
-      "description": "Texto en español."
-    },
-    "text_en": {
-      "type": "text",
-      "description": "Texto en inglés. Opcional: si está vacío, el frontend usará el texto en español."
     }
   }
 }
