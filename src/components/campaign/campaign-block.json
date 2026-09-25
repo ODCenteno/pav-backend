@@ -1,0 +1,54 @@
+{
+  "collectionName": "components_campaign_campaign_blocks",
+  "info": {
+    "displayName": "Bloque de Campaña",
+    "description": "Bloque de campaña o alianza: título, descripción, logo y enlace.",
+    "icon": "bullhorn",
+    "singularName": "campaign-block",
+    "pluralName": "campaign-blocks"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Título del bloque. Ejemplo: Conoce la campaña del destino."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción de la campaña o alianza."
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Logotipo de la campaña o del socio (imagen cuadrada preferente)."
+    },
+    "url": {
+      "type": "string",
+      "description": "Enlace externo del bloque. Ejemplo: https://ejemplo.org/campana"
+    },
+    "linkLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto del enlace. Ejemplo: Más información."
+    }
+  }
+}

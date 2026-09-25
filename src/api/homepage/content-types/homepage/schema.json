@@ -137,6 +137,15 @@
         }
       },
       "description": "Llamada a la acción final al pie de la página."
+    },
+    "regionMapImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Mapa estático de BCS/Loreto que se muestra junto a la sección de mapa."
     }
   }
 }

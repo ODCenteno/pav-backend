@@ -63,7 +63,7 @@ const ROWS = [
 ];
 
 describe('isSharedSlugUpdate', () => {
-  it('accepts afterUpdate for the four shared-slug models', () => {
+  it('accepts afterUpdate for every shared-slug model', () => {
     for (const uid of SHARED_SLUG_MODELS) {
       expect(isSharedSlugUpdate('afterUpdate', uid)).toBe(true);
     }

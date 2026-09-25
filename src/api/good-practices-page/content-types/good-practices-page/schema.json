@@ -1,0 +1,192 @@
+{
+  "kind": "singleType",
+  "collectionName": "good_practices_pages",
+  "info": {
+    "singularName": "good-practices-page",
+    "pluralName": "good-practices-pages",
+    "displayName": "Página de Buenas Prácticas",
+    "description": "Contenido de la página de buenas prácticas: área natural protegida, área de influencia, zona de refugio pesquero, recomendaciones y consejos."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "hero": {
+      "type": "component",
+      "component": "hero.hero-section",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Hero principal de la página de buenas prácticas."
+    },
+    "intro": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Introducción de la página (título + subtítulo)."
+    },
+    "protectedArea": {
+      "type": "component",
+      "component": "guide.protected-link",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Información del área natural protegida con enlace externo."
+    },
+    "anpMapImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Mapa del Área Natural Protegida (ANP)."
+    },
+    "conanpUrl": {
+      "type": "string",
+      "description": "Enlace a la ficha de la CONANP. Ejemplo: https://conanp.gob.mx/anp/..."
+    },
+    "influenceHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado del área de influencia."
+    },
+    "influenceText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto sobre el área de influencia de la comunidad."
+    },
+    "fishingHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado de la sección de zona de refugio pesquero."
+    },
+    "fishingText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto explicativo sobre la zona de refugio pesquero."
+    },
+    "fishingRules": {
+      "type": "component",
+      "component": "guide.text-list-item",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Lista de reglas de la zona de refugio pesquero."
+    },
+    "fishingRefugeMapImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Mapa de la zona de refugio pesquero."
+    },
+    "recommendationsHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado de la sección de recomendaciones."
+    },
+    "recommendations": {
+      "type": "component",
+      "component": "guide.text-list-item",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Lista de recomendaciones para visitantes."
+    },
+    "tipsHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado de la sección de consejos."
+    },
+    "tips": {
+      "type": "component",
+      "component": "guide.text-list-item",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Lista de consejos para visitar la zona."
+    },
+    "campaign": {
+      "type": "component",
+      "component": "campaign.campaign-block",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Bloque de campaña o alianza con logo y enlace."
+    },
+    "finalCta": {
+      "type": "component",
+      "component": "cta.cta-section",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Llamada a la acción final de la página."
+    }
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "kind": "collectionType",
+  "collectionName": "communities",
+  "info": {
+    "singularName": "community",
+    "pluralName": "communities",
+    "displayName": "Comunidad",
+    "description": "Comunidad del destino (Puerto Agua Verde o Rancho San Cosme) con su historia, destacados, datos rápidos y galería."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "required": true,
+      "description": "Nombre de la comunidad. Ejemplo: Puerto Agua Verde."
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true,
+      "description": "Identificador único en la URL. Se genera automáticamente a partir del nombre, pero puedes editarlo. Es COMPARTIDO entre idiomas: el mismo slug sirve para /comunidades/<slug> y /en/comunidades/<slug>."
+    },
+    "tagline": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Frase corta que acompaña al nombre en la cabecera. Ejemplo: El corazón costero de la Sierra de la Giganta."
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción breve de la comunidad para la cabecera de su página."
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Orden de aparición. Los números menores aparecen primero."
+    },
+    "color": {
+      "type": "string",
+      "description": "Color principal en hexadecimal para superficies grandes, iconos y bordes. Ejemplo: #0CA58C."
+    },
+    "textColor": {
+      "type": "string",
+      "description": "Color de texto en hexadecimal para textos pequeños y etiquetas (contraste AA sobre blanco). Ejemplo: #08806D."
+    },
+    "badgeIcon": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Insignia de la comunidad (icono pequeño). Si se deja vacía, el sitio usa el icono incluido por defecto."
+    },
+    "heroImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Imagen principal de la cabecera de la página de la comunidad."
+    },
+    "location": {
+      "type": "component",
+      "component": "location.geo-point",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Ubicación geográfica de la comunidad con coordenadas GPS y nombre bilingüe."
+    },
+    "googleMapsUrl": {
+      "type": "string",
+      "description": "Enlace a Google Maps de la comunidad. Ejemplo: https://maps.app.goo.gl/..."
+    },
+    "historyHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado de la sección de historia."
+    },
+    "historyMilestones": {
+      "type": "component",
+      "component": "guide.milestone",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Línea de tiempo de hitos históricos."
+    },
+    "historyText": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Texto narrativo de la historia de la comunidad."
+    },
+    "touristMapImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Imagen del mapa turístico."
+    },
+    "touristMapCaption": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Pie de imagen del mapa turístico."
+    },
+    "highlightsHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado de la sección de experiencias destacadas."
+    },
+    "highlights": {
+      "type": "component",
+      "component": "highlight.highlight-card",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Experiencias destacadas. Agrega una tarjeta por cada elemento destacado."
+    },
+    "quickFactsHeader": {
+      "type": "component",
+      "component": "section.section-header",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Encabezado de la sección de datos rápidos."
+    },
+    "quickFacts": {
+      "type": "component",
+      "component": "quickfact.quick-fact",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Datos rápidos (cuadrícula bento). Agrega uno por cada dato."
+    },
+    "gallery": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "Galería de imágenes de la comunidad. Puedes subir varias a la vez. Formatos: JPG, PNG o WebP."
+    },
+    "finalCta": {
+      "type": "component",
+      "component": "cta.cta-section",
+      "repeatable": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Llamada a la acción final de la página de la comunidad."
+    },
+    "listings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::listing.listing",
+      "mappedBy": "community",
+      "description": "Lugares y experiencias asociados a esta comunidad."
+    },
+    "members": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::community-member.community-member",
+      "mappedBy": "community",
+      "description": "Personas de la comunidad asociadas a esta comunidad."
+    }
+  }
+}

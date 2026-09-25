@@ -23,6 +23,7 @@ export const SHARED_SLUG_MODELS = [
   'api::listing.listing',
   'api::category.category',
   'api::community-member.community-member',
+  'api::community.community',
   'api::legal-page.legal-page',
 ] as const;
 

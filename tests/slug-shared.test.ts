@@ -24,6 +24,7 @@ describe('schema invariant: slugs are shared across locales', () => {
   it('found the expected slug-bearing content types', () => {
     expect(withSlug.map(({ ct }) => ct).sort()).toEqual([
       'category',
+      'community',
       'community-member',
       'legal-page',
       'listing',

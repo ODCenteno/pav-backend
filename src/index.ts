@@ -8,6 +8,8 @@ const PUBLIC_PERMISSIONS = [
   'api::listing.listing.findOne',
   'api::community-member.community-member.find',
   'api::community-member.community-member.findOne',
+  'api::community.community.find',
+  'api::community.community.findOne',
   'api::team-member.team-member.find',
   'api::team-member.team-member.findOne',
   'api::organization.organization.find',
@@ -21,6 +23,7 @@ const PUBLIC_PERMISSIONS = [
   'api::experiences-page.experiences-page.find',
   'api::about-page.about-page.find',
   'api::guide-page.guide-page.find',
+  'api::good-practices-page.good-practices-page.find',
 ];
 
 export default {

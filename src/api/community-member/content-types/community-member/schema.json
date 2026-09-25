@@ -116,6 +116,23 @@
       "type": "integer",
       "default": 0,
       "description": "Orden de aparición. Los números menores aparecen primero."
+    },
+    "community": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::community.community",
+      "inversedBy": "members",
+      "description": "Comunidad a la que pertenece la persona."
+    },
+    "shortDescription": {
+      "type": "text",
+      "maxLength": 200,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "description": "Descripción breve (máximo 200 caracteres) para tarjetas y vistas previas."
     }
   }
 }

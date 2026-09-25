@@ -198,6 +198,18 @@
         }
       },
       "description": "Productos o servicios estructurados ofrecidos por este lugar."
+    },
+    "community": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::community.community",
+      "inversedBy": "listings",
+      "description": "Comunidad a la que pertenece el lugar (Puerto Agua Verde o Rancho San Cosme)."
+    },
+    "hideContact": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marca para ocultar la información de contacto en la página pública; usado en Servicios."
     }
   }
 }
