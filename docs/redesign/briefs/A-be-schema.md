@@ -79,6 +79,8 @@ Create `scripts/migrate-redesign.js`, plus a `migrate:redesign` script in `packa
    - Keep the legacy category records.
    - Reassign listings with the contract mapping: `sites` and `accommodation` → `experiences`,
      `restaurants` → `gastronomy`, `services` stays.
+   - Set `hideContact = true` on every listing whose category ends up as `services`
+     (contract §5). Leave every other listing untouched.
    - Do not move anything into `crafts` automatically.
    - Print the listings that are candidates for `crafts` (Artesanías Andrea, Joyas del Mar) as
      "needs manual review", unless `--crafts=<slug,slug>` is given.
@@ -108,7 +110,9 @@ Create `scripts/migrate-redesign.js`, plus a `migrate:redesign` script in `packa
 
 Tests (Vitest with SQLite, like `tests/enrich-recommendations.test.*`):
 - The dry-run writes nothing.
-- `--apply` produces the expected rows.
+- `--apply` produces the expected rows, including `hideContact = true` on `services` listings only.
+- Relations (`listing.community`, `member.community`) are set in both locales, since Strapi 5
+  stores relations per locale.
 - A second run is a no-op.
 - The snapshot file is written.
 - Unresolved listings are reported, not guessed.
