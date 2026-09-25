@@ -59,6 +59,12 @@ Report and stop after A1.
 
 ## Milestone A2 · Migration script
 
+**Step 0 (schema follow-up from A1 review).** Add `internalLabel` (string, default
+`"Good Practices Page"`, not localized, Spanish admin description like the other page single
+types) to `good-practices-page`, update the schema test's exact key set, and regenerate
+`types/generated/*`. Commit it separately (`feat(good-practices): add internalLabel`).
+
+
 Create `scripts/migrate-redesign.js`, plus a `migrate:redesign` script in `package.json`.
 
 **Approach**
