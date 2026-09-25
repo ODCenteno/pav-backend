@@ -124,6 +124,31 @@ Tests (Vitest with SQLite, like `tests/enrich-recommendations.test.*`):
 - Unresolved listings are reported, not guessed.
 - The RSC coordinates are the contract ones.
 
+## Milestone A3 · Phone number fields (after A2 is reviewed)
+
+Contract §5b. Expand only.
+
+1. Add `phoneCountryCode`, `phoneNumber`, `whatsappCountryCode` and `whatsappNumber` to
+   `src/components/contact/contact-info.json` with the exact regexes and defaults from §5b.
+   Spanish admin descriptions, e.g. "Código de país, por defecto +52" and "10 dígitos, sin
+   espacios ni guiones". Mark legacy `phone` and `whatsapp` descriptions as
+   "Obsoleto: usar los campos de código y número".
+2. Add a content-manager layout so each country code sits next to its number (narrow code,
+   wide number), following how this repo configures layouts. If it has no layout
+   configuration, skip this and say so in the report.
+3. Add a `phones` step to `scripts/migrate-redesign.js` that fills the new fields from the
+   legacy ones with the §5b rules, in both locales, for listings and community members.
+   Same safety: dry-run by default, snapshot, idempotent, never overwrite non-empty new
+   fields, and unparseable values listed as "needs manual review".
+4. Regenerate `types/generated/*`.
+
+Tests first:
+- Schema test for the 4 fields, including regex and default.
+- A test showing Strapi rejects `phoneNumber: "613 123 4567"` and `"61312345"`.
+- Parser table tests: `5216131234567`, `526131234567`, `+52 613 123 4567`, `613-123-4567`
+  must all give `+52` + `6131234567`. `12345` must go to manual review.
+- An idempotency test.
+
 ## Milestone report format
 
 End with this report, then stop:
