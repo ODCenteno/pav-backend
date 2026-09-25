@@ -16,6 +16,11 @@
     }
   },
   "attributes": {
+    "internalLabel": {
+      "type": "string",
+      "default": "Good Practices Page",
+      "description": "Etiqueta interna para identificar esta entrada en la lista de borradores."
+    },
     "hero": {
       "type": "component",
       "component": "hero.hero-section",

@@ -55,6 +55,7 @@ function expectFieldMatches(label: string, attr: any, spec: FieldSpec): void {
 }
 
 const GOOD_PRACTICES_FIELDS: Record<string, FieldSpec> = {
+  internalLabel: { type: 'string', localized: false },
   hero: {
     type: 'component',
     component: 'hero.hero-section',
@@ -158,10 +159,10 @@ describe('redesign contract section 7: good-practices-page single type', () => {
     expect(schema.info.pluralName).toBe('good-practices-pages');
   });
 
-  it('has exactly the 17 contract attributes (no internalLabel)', () => {
-    expect(GOOD_PRACTICES_ATTRIBUTE_KEYS).toHaveLength(17);
+  it('has exactly the 18 contract attributes (internalLabel included)', () => {
+    expect(GOOD_PRACTICES_ATTRIBUTE_KEYS).toHaveLength(18);
     expect(Object.keys(schema.attributes).sort()).toEqual(GOOD_PRACTICES_ATTRIBUTE_KEYS);
-    expect(schema.attributes.internalLabel).toBeUndefined();
+    expect(schema.attributes.internalLabel.default).toBe('Good Practices Page');
   });
 
   it('matches the contract field by field', () => {

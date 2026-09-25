@@ -921,6 +921,8 @@ export interface ApiGoodPracticesPageGoodPracticesPage
           localized: true;
         };
       }>;
+    internalLabel: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Good Practices Page'>;
     intro: Schema.Attribute.Component<'section.section-header', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
