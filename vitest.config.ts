@@ -18,6 +18,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.{js,ts}'],
+    // tests/migrate-redesign.test.js boots a real Strapi instance. Under the
+    // default `forks` pool, Strapi's shutdown makes the child process exit
+    // unexpectedly ("Worker exited unexpectedly"); worker threads do not.
+    pool: 'threads',
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary'],
