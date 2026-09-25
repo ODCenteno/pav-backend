@@ -124,6 +124,40 @@ export interface AmenityAmenityItem extends Struct.ComponentSchema {
   };
 }
 
+export interface CampaignCampaignBlock extends Struct.ComponentSchema {
+  collectionName: 'components_campaign_campaign_blocks';
+  info: {
+    description: 'Bloque de campa\u00F1a o alianza: t\u00EDtulo, descripci\u00F3n, logo y enlace.';
+    displayName: 'Bloque de Campa\u00F1a';
+    icon: 'bullhorn';
+    pluralName: 'campaign-blocks';
+    singularName: 'campaign-block';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    linkLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    logo: Schema.Attribute.Media<'images'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    url: Schema.Attribute.String;
+  };
+}
+
 export interface CommonLocalizedText extends Struct.ComponentSchema {
   collectionName: 'components_common_localized_texts';
   info: {
@@ -832,6 +866,7 @@ declare module '@strapi/strapi' {
       'about.collaboration-block': AboutCollaborationBlock;
       'about.values-block': AboutValuesBlock;
       'amenity.amenity-item': AmenityAmenityItem;
+      'campaign.campaign-block': CampaignCampaignBlock;
       'common.localized-text': CommonLocalizedText;
       'contact.contact-info': ContactContactInfo;
       'contact.links': ContactLinks;

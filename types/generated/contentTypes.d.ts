@@ -107,43 +107,6 @@ export interface AdminApiTokenPermission extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface AdminAuditLog extends Struct.CollectionTypeSchema {
-  collectionName: 'strapi_audit_logs';
-  info: {
-    displayName: 'Audit Log';
-    pluralName: 'audit-logs';
-    singularName: 'audit-log';
-  };
-  options: {
-    draftAndPublish: false;
-    timestamps: false;
-  };
-  pluginOptions: {
-    'content-manager': {
-      visible: false;
-    };
-    'content-type-builder': {
-      visible: false;
-    };
-  };
-  attributes: {
-    action: Schema.Attribute.String & Schema.Attribute.Required;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    date: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'admin::audit-log'> &
-      Schema.Attribute.Private;
-    payload: Schema.Attribute.JSON;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<'oneToOne', 'admin::user'>;
-  };
-}
-
 export interface AdminPermission extends Struct.CollectionTypeSchema {
   collectionName: 'admin_permissions';
   info: {
@@ -619,6 +582,10 @@ export interface ApiCommunityMemberCommunityMember
           localized: true;
         };
       }>;
+    community: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::community.community'
+    >;
     contact: Schema.Attribute.Component<'contact.contact-info', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -664,7 +631,147 @@ export interface ApiCommunityMemberCommunityMember
           localized: true;
         };
       }>;
+    shortDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCommunityCommunity extends Struct.CollectionTypeSchema {
+  collectionName: 'communities';
+  info: {
+    description: 'Comunidad del destino (Puerto Agua Verde o Rancho San Cosme) con su historia, destacados, datos r\u00E1pidos y galer\u00EDa.';
+    displayName: 'Comunidad';
+    pluralName: 'communities';
+    singularName: 'community';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    badgeIcon: Schema.Attribute.Media<'images'>;
+    color: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    gallery: Schema.Attribute.Media<'images', true>;
+    googleMapsUrl: Schema.Attribute.String;
+    heroImage: Schema.Attribute.Media<'images'>;
+    highlights: Schema.Attribute.Component<'highlight.highlight-card', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    highlightsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    historyHeader: Schema.Attribute.Component<'section.section-header', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    historyMilestones: Schema.Attribute.Component<'guide.milestone', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    historyText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    listings: Schema.Attribute.Relation<'oneToMany', 'api::listing.listing'>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::community.community'
+    >;
+    location: Schema.Attribute.Component<'location.geo-point', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    members: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::community-member.community-member'
+    >;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    publishedAt: Schema.Attribute.DateTime;
+    quickFacts: Schema.Attribute.Component<'quickfact.quick-fact', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    quickFactsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    tagline: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    textColor: Schema.Attribute.String;
+    touristMapCaption: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    touristMapImage: Schema.Attribute.Media<'images'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -728,6 +835,132 @@ export interface ApiExperiencesPageExperiencesPage
       'section.section-header',
       false
     > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiGoodPracticesPageGoodPracticesPage
+  extends Struct.SingleTypeSchema {
+  collectionName: 'good_practices_pages';
+  info: {
+    description: 'Contenido de la p\u00E1gina de buenas pr\u00E1cticas: \u00E1rea natural protegida, \u00E1rea de influencia, zona de refugio pesquero, recomendaciones y consejos.';
+    displayName: 'P\u00E1gina de Buenas Pr\u00E1cticas';
+    pluralName: 'good-practices-pages';
+    singularName: 'good-practices-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    anpMapImage: Schema.Attribute.Media<'images'>;
+    campaign: Schema.Attribute.Component<'campaign.campaign-block', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    conanpUrl: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    finalCta: Schema.Attribute.Component<'cta.cta-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    fishingHeader: Schema.Attribute.Component<'section.section-header', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    fishingRefugeMapImage: Schema.Attribute.Media<'images'>;
+    fishingRules: Schema.Attribute.Component<'guide.text-list-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    fishingText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hero: Schema.Attribute.Component<'hero.hero-section', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    influenceHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    influenceText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    intro: Schema.Attribute.Component<'section.section-header', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::good-practices-page.good-practices-page'
+    >;
+    protectedArea: Schema.Attribute.Component<'guide.protected-link', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    recommendations: Schema.Attribute.Component<'guide.text-list-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    recommendationsHeader: Schema.Attribute.Component<
+      'section.section-header',
+      false
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    tips: Schema.Attribute.Component<'guide.text-list-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    tipsHeader: Schema.Attribute.Component<'section.section-header', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1017,6 +1250,7 @@ export interface ApiHomepageHomepage extends Struct.SingleTypeSchema {
       }>;
     quickFactsImage1: Schema.Attribute.Media<'images'>;
     quickFactsImage2: Schema.Attribute.Media<'images'>;
+    regionMapImage: Schema.Attribute.Media<'images'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1094,6 +1328,10 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
         };
       }>;
     category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
+    community: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::community.community'
+    >;
     contact: Schema.Attribute.Component<'contact.contact-info', false> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1110,6 +1348,7 @@ export interface ApiListingListing extends Struct.CollectionTypeSchema {
         };
       }>;
     gallery: Schema.Attribute.Media<'images', true>;
+    hideContact: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     isFeatured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
@@ -1996,7 +2235,6 @@ declare module '@strapi/strapi' {
     export interface ContentTypeSchemas {
       'admin::api-token': AdminApiToken;
       'admin::api-token-permission': AdminApiTokenPermission;
-      'admin::audit-log': AdminAuditLog;
       'admin::permission': AdminPermission;
       'admin::role': AdminRole;
       'admin::session': AdminSession;
@@ -2006,7 +2244,9 @@ declare module '@strapi/strapi' {
       'api::about-page.about-page': ApiAboutPageAboutPage;
       'api::category.category': ApiCategoryCategory;
       'api::community-member.community-member': ApiCommunityMemberCommunityMember;
+      'api::community.community': ApiCommunityCommunity;
       'api::experiences-page.experiences-page': ApiExperiencesPageExperiencesPage;
+      'api::good-practices-page.good-practices-page': ApiGoodPracticesPageGoodPracticesPage;
       'api::guide-page.guide-page': ApiGuidePageGuidePage;
       'api::homepage.homepage': ApiHomepageHomepage;
       'api::legal-page.legal-page': ApiLegalPageLegalPage;
