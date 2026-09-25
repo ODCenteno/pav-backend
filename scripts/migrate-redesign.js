@@ -3,71 +3,84 @@
  * migrate-redesign.js
  *
  * One-shot data migration for the Puerto Agua Verde redesign contract
- * (docs/contracts/redesign-data-contract.md). Raw SQL on the Strapi 5.39
- * physical layout (SQLite in dev, Postgres/Neon in prod), following the
- * `enrich-recommendations-from-es.js` house pattern. Steps:
+ * (docs/contracts/redesign-data-contract.md), running inside a loaded Strapi
+ * instance and using Strapi's own APIs:
  *
- *   1. Categories: relabel/reorder `experiences` (1) and `services` (3);
- *      create `gastronomy` (2, absorbs the legacy `restaurants` color) and
- *      `crafts` (4, no color yet — flagged for manual review) as published
- *      docs, one row per locale. Legacy category docs are NEVER touched.
- *      Listings are reassigned per physical row: sites/accommodation ->
- *      experiences, restaurants -> gastronomy; --crafts=<slug,slug> moves
- *      listings into crafts. Afterwards every `services` listing gets
- *      hide_contact = 1 on ALL its rows (draft + published, both locales).
- *      No other listing is written.
+ *   - Document Service (`strapi.documents(uid)`) for every NEW document
+ *     (categories, communities, the artisans listing, the good-practices
+ *     page): one create in `es-MX`, then one update of the same documentId
+ *     with `locale: 'en'`. `status: 'published'` publishes categories and
+ *     communities; the artisan listing and the good-practices page are left
+ *     as drafts (no `status`), so only draft rows exist for them.
+ *   - Query Engine (`strapi.db.query(uid)`) for every EXISTING row
+ *     (`listing.category`, `listing.community`, `listing.hideContact`,
+ *     `member.community`): each physical row (draft or published, per
+ *     locale) is updated in place and linked to the SAME-status,
+ *     SAME-locale row of its target, which is how Strapi 5 stores relations
+ *     under draft & publish + i18n.
+ *
+ * This works unmodified on both SQLite (dev) and Postgres/Neon (prod):
+ * Strapi's own `strapi.db` picks the dialect from its own config, so this
+ * script never talks SQL directly.
+ *
+ * Steps, mirroring the contract:
+ *   1. Categories: create the 4 contract categories (or relabel/reorder the
+ *      2 that already exist under their legacy names), reassign listings
+ *      per the legacy -> current map (sites/accommodation -> experiences,
+ *      restaurants -> gastronomy; `--crafts=<slug,slug>` moves listings into
+ *      crafts instead), then set `hideContact = true` on every row of every
+ *      listing whose final category is `services`. Every other listing is
+ *      left untouched. Services listings not moved into crafts are printed
+ *      as manual-review crafts candidates.
  *   2. Communities: create `puerto-agua-verde` and `rancho-san-cosme`
- *      (contract colors/orders/geo points, one published row per locale)
- *      with history starting content duplicated from the guide-page of the
- *      same locale (history text, historyHeader section header,
- *      historyMilestones renumbered 1..n). Component rows are always
- *      duplicated, never shared with guide_pages.
- *   3. Listing -> community: per listing document, source priority is
- *      (1) --map CSV override, (2) the embedded LISTING_COMMUNITY table,
- *      (3) a linked member's locality. Unresolved listings are reported as
- *      "needs manual review", never guessed. Every physical row of the
- *      document is linked to the SAME-LOCALE community row (listing_ord
- *      NULL, UNIQUE-respecting).
- *   4. Member -> community: locality agua-verde -> puerto-agua-verde,
- *      rancho-san-cosme -> rancho-san-cosme, same-locale row per member
- *      row. The locality column is kept. Empty/unknown locality is
- *      reported for manual review.
- *   5. Artisans group listing: create `artesanas-de-puerto-agua-verde` as
- *      a DRAFT document (both locales) in crafts + puerto-agua-verde, and
- *      link every member whose community is puerto-agua-verde and whose
- *      role matches /artesan|craft/i (names/slugs printed).
- *   6. Good-practices page: if ANY row exists, skip. Otherwise create 2
- *      DRAFT rows copying the guide-page published row of each locale
- *      (protectedArea, influence, fishing, recommendations, tips; the
- *      tipsHeader is a NEW section header built from
- *      guide_pages.driving_tips_header).
+ *      (contract colors/order/coordinates), with history content (header,
+ *      milestones, text) duplicated from the guide-page of the SAME locale.
+ *   3. Listings -> community: resolved per listing document from (1) a
+ *      `--map` CSV override, (2) the embedded LISTING_COMMUNITY table, (3) a
+ *      linked member's `locality`. Unresolved listings are reported as
+ *      "needs manual review", never guessed.
+ *   4. Members -> community: `locality` `agua-verde` -> `puerto-agua-verde`,
+ *      `rancho-san-cosme` -> `rancho-san-cosme`. `locality` is kept.
+ *   5. Artisans group listing: "Artesanas de Puerto Agua Verde" / "Artisans
+ *      of Puerto Agua Verde", category `crafts`, community
+ *      `puerto-agua-verde`, created as a DRAFT (both locales) and linked to
+ *      every member whose community is `puerto-agua-verde` and whose role
+ *      matches /artesan|craft/i. The linked members are printed.
+ *   6. Good-practices page: created once, as a DRAFT (both locales), from
+ *      the current guide-page content (protected area, influence, fishing
+ *      refuge, recommendations, tips). Skipped if it already has rows.
  *
  * Safety:
- *   - Dry-run by default (prints the plan, writes nothing); exits 1 with
- *     pending work, 0 when clean. Parity with enrich-recommendations.
+ *   - Dry-run by default (prints the plan, writes nothing); exits 0.
  *   - --apply writes a JSON snapshot of the pre-write state BEFORE any
- *     write: enough for manual restore (old category labels, legacy
- *     category links that will be deleted, listings whose hide_contact
- *     will flip).
- *   - All writes happen in ONE transaction (sqlite) / BEGIN..COMMIT (pg).
- *   - Idempotent: a second run changes nothing (existence checks by slug,
- *     UNIQUE pair checks, row-level update skipping, creations only on
- *     absent documents).
+ *     write, then writes inside a single `strapi.db.transaction`. Exits 0 on
+ *     success, non-zero on failure (including a rolled-back transaction).
+ *   - Idempotent: a second run finds every category/community/listing/
+ *     member already at its target state and reports nothing to do.
  *
  * Usage:
  *   node scripts/migrate-redesign.js                          # dry-run
  *   node scripts/migrate-redesign.js --apply                  # writes
- *   node scripts/migrate-redesign.js --db /path.db            # sqlite
+ *   node scripts/migrate-redesign.js --db /path/to/data.db     # sqlite target
  *   node scripts/migrate-redesign.js --map=overrides.csv      # listingSlug,communitySlug
  *   node scripts/migrate-redesign.js --crafts=slug-a,slug-b   # move into crafts
- *   # PostgreSQL: DATABASE_CLIENT=postgres DATABASE_URL=...
+ *   # PostgreSQL: DATABASE_CLIENT=postgres DATABASE_URL=... (as usual for this app)
  */
 
 const fs = require('node:fs');
 const path = require('node:path');
-const crypto = require('node:crypto');
 
 const LOCALES = ['es-MX', 'en'];
+const [DEFAULT_LOCALE, SECOND_LOCALE] = LOCALES;
+
+const UID = {
+  category: 'api::category.category',
+  listing: 'api::listing.listing',
+  community: 'api::community.community',
+  member: 'api::community-member.community-member',
+  goodPractices: 'api::good-practices-page.good-practices-page',
+  guidePage: 'api::guide-page.guide-page',
+};
 
 // Contract §1. Order matters; labels are per locale.
 const CATEGORY_CONTRACT = [
@@ -89,9 +102,7 @@ const CATEGORY_CONTRACT = [
   },
 ];
 
-// Contract §1 legacy -> current mapping. Order defines determinism when a
-// row somehow links several legacy categories at once.
-const LEGACY_CATEGORY_ORDER = ['sites', 'accommodation', 'restaurants'];
+// Contract §1 legacy -> current mapping.
 const LEGACY_CATEGORY_TARGET = {
   sites: 'experiences',
   accommodation: 'experiences',
@@ -101,8 +112,8 @@ const LEGACY_CATEGORY_TARGET = {
 // Fallback when the legacy `restaurants` category carries no color.
 const GASTRONOMY_COLOR_FALLBACK = '#F5A623';
 
-// Contract §2 coordinates. HARD RULE: these are the contract values.
-// Do NOT reuse RSC_COORDS from scripts/import-csv-listings.js — that value
+// Contract §2 coordinates. HARD RULE: these are the contract values. Do NOT
+// reuse RSC_COORDS from scripts/import-csv-listings.js — that value
 // (24.16315, -110.3384) points at La Paz, not at the hamlet.
 const PAV_COORDS = { lat: 25.51204, lng: -111.07577 };
 const RSC_COORDS = { lat: 25.5784138, lng: -111.1694027 };
@@ -159,99 +170,100 @@ const ARTISAN_ROLE_RE = /artesan|craft/i;
 
 const GOOD_PRACTICES_LABEL = 'Good Practices Page';
 
-// Strapi 5 document ids: 25-char lowercase [0-9a-z] (nanoid-style alphabet).
-const DOC_ID_LEN = 25;
-const DOC_ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
-function newDocumentId() {
-  const bytes = crypto.randomBytes(DOC_ID_LEN);
-  let s = '';
-  for (let i = 0; i < DOC_ID_LEN; i++) s += DOC_ID_ALPHABET[bytes[i] % DOC_ID_ALPHABET.length];
-  return s;
-}
-
-// ---- Database access --------------------------------------------------------
-
-async function openDb(dialect, loc) {
-  if (dialect === 'sqlite') {
-    const Database = require('better-sqlite3');
-    const db = new Database(loc);
-    db.pragma('busy_timeout = 5000');
-    return db;
-  }
-  if (dialect === 'postgres') {
-    const { Client } = require('pg');
-    const client = new Client({ connectionString: loc });
-    await client.connect();
-    return client;
-  }
-  throw new Error(`Unsupported dialect: ${dialect}`);
-}
-
-async function closeDb(db, dialect) {
-  if (dialect === 'sqlite') return db.close();
-  if (dialect === 'postgres') return db.end();
-}
-
-function quoteIdent(name) {
-  return name === 'order' ? '"order"' : name;
-}
-
-function ph(dialect, i) {
-  return dialect === 'sqlite' ? '?' : `$${i}`;
-}
+// ---- Strapi runtime -----------------------------------------------------
 
 /**
- * Translate Postgres-style `$N` placeholders into better-sqlite3 `?` form when
- * running on sqlite. better-sqlite3 binds `?` strictly positionally (no
- * named-by-number semantics), so we also expand the params array: each `$N`
- * occurrence gets the value at index N-1 repeated in the new order.
+ * Boot a loaded Strapi instance (register + bootstrap, no HTTP server).
+ * Compiles the TS project to `dist/` first when it is missing — the script
+ * itself normally runs after `pnpm build`-adjacent tooling has produced
+ * `dist/`, but callers (like the test suite, which runs BEFORE `pnpm build`
+ * in CI) may need this to compile on demand.
  */
-function adaptForSqlite(sql, params) {
-  const refs = [...sql.matchAll(/\$(\d+)/g)].map((m) => parseInt(m[1], 10));
-  const adapted = sql.replace(/\$\d+/g, '?');
-  const expanded = refs.map((n) => params[n - 1]);
-  return { sql: adapted, params: expanded };
+async function loadStrapiInstance({ dbPath, appDir = process.cwd() } = {}) {
+  if (dbPath) process.env.DATABASE_FILENAME = dbPath;
+  // Required lazily: keeping it out of the top-level scope means unit tests
+  // that only exercise planning/formatting helpers never need to boot Strapi.
+  const { createStrapi, compileStrapi } = require('@strapi/strapi');
+
+  let distDir = path.join(appDir, 'dist');
+  if (!fs.existsSync(path.join(distDir, 'src'))) {
+    const compiled = await compileStrapi({ appDir });
+    distDir = compiled.distDir;
+  }
+  const app = await createStrapi({ appDir, distDir }).load();
+  return app;
+}
+
+async function closeStrapiInstance(app) {
+  if (!app) return;
+  await app.destroy();
+  // `createStrapi()` installs its own SIGTERM/SIGINT handlers that call
+  // `strapi.destroy()` again and then `process.exit()`. When the caller
+  // (the CLI, or a test's afterAll) already destroyed this instance, a
+  // later signal — e.g. a test runner ending its worker process — would
+  // otherwise trigger a double-destroy and an abrupt, unhandled exit.
+  process.removeAllListeners('SIGTERM');
+  process.removeAllListeners('SIGINT');
+}
+
+// ---- Small helpers --------------------------------------------------------
+
+function groupBy(rows, keyFn) {
+  const map = new Map();
+  for (const row of rows) {
+    const key = keyFn(row);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(row);
+  }
+  return map;
+}
+
+/** Index of {slug -> [{ id, locale, draft }]} rebuilt from a fresh DB read. */
+async function reindexRows(strapi, uid) {
+  const rows = await strapi.db.query(uid).findMany({ select: ['id', 'slug', 'locale', 'publishedAt'] });
+  const idx = new Map();
+  for (const r of rows) {
+    const key = `${r.slug}:${r.locale}`;
+    if (!idx.has(key)) idx.set(key, []);
+    idx.get(key).push({ id: r.id, draft: r.publishedAt == null });
+  }
+  return idx;
+}
+
+/** Draft row preferred for new (unpublished) rows; published preferred for published targets. */
+function resolveRow(idx, slug, locale, preferDraft) {
+  const list = idx.get(`${slug}:${locale}`) || [];
+  if (list.length === 0) return null;
+  return (preferDraft ? list.find((r) => r.draft) : list.find((r) => !r.draft)) || list[0];
 }
 
 // ---- Planner ----------------------------------------------------------------
 
-async function planMigration(db, dialect, opts = {}) {
+async function planMigration(strapi, opts = {}) {
   const { mapOverrides = {}, craftsSlugs = [] } = opts;
-  const q = async (sql, params = []) => {
-    if (dialect === 'sqlite') {
-      const { sql: s, params: p } = adaptForSqlite(sql, params);
-      return db.prepare(s).all(...p);
-    }
-    return (await db.query(sql, params)).rows;
-  };
 
   const plan = {
     now: new Date().toISOString(),
-    categories: { createDocs: [], updateRows: [], skippedRows: [], existingRows: [] },
-    listingCategory: { moves: [], keptRows: 0, rowsWithoutCategory: 0 },
+    categories: { createDocs: [], updateRows: [], skippedRows: [] },
+    listingCategory: { moves: [], keptRows: 0 },
     hideContact: { rows: [], alreadyHidden: 0 },
-    communities: { createDocs: [], skippedSlugs: [], existingRows: [] },
+    communities: { createDocs: [], skippedSlugs: [] },
     listingCommunity: { links: [], existingPairs: 0, unresolved: [] },
     memberCommunity: { links: [], existingPairs: 0, noLocality: [] },
     artisan: { create: null, skipped: false, memberLinks: [], linkedMembers: [] },
     goodPractices: { create: null, skipped: false },
+    craftsCandidates: [],
     craftsColorNote: false,
     warnings: [],
-    snapshot: { categoryLinks: [], hideContactRows: [] },
+    snapshot: { touches: [], newDocuments: [] },
   };
 
   // ---- Step 1 · Categories -------------------------------------------------
 
-  const catRows = await q(
-    `SELECT id, document_id, slug, name, color, ${quoteIdent('order')} AS ord, published_at, locale
-       FROM categories`
-  );
-  plan.categories.existingRows = catRows;
-  const catsBySlug = new Map();
-  for (const r of catRows) {
-    if (!catsBySlug.has(r.slug)) catsBySlug.set(r.slug, []);
-    catsBySlug.get(r.slug).push(r);
-  }
+  const catRows = await strapi.db.query(UID.category).findMany({
+    select: ['id', 'documentId', 'slug', 'name', 'color', 'order', 'locale', 'publishedAt'],
+  });
+  const catsBySlug = groupBy(catRows, (r) => r.slug);
 
   const restaurantsRow = (catsBySlug.get('restaurants') || []).find((r) => r.color);
   const gastronomyColor = (restaurantsRow && restaurantsRow.color) || GASTRONOMY_COLOR_FALLBACK;
@@ -263,13 +275,13 @@ async function planMigration(db, dialect, opts = {}) {
         slug: c.slug,
         order: c.order,
         color: c.slug === 'gastronomy' ? gastronomyColor : null,
-        document_id: newDocumentId(),
-        rows: LOCALES.map((locale) => ({ locale, name: c.name[locale], published_at: plan.now })),
+        name: c.name,
       });
+      plan.snapshot.newDocuments.push({ uid: UID.category, slug: c.slug });
     } else {
       for (const row of rows) {
-        const desiredName = c.name[row.locale] ?? c.name[LOCALES[0]];
-        if (row.name === desiredName && Number(row.ord) === c.order) {
+        const desiredName = c.name[row.locale] ?? c.name[DEFAULT_LOCALE];
+        if (row.name === desiredName && Number(row.order) === c.order) {
           plan.categories.skippedRows.push({ id: row.id, slug: row.slug, locale: row.locale });
         } else {
           plan.categories.updateRows.push({
@@ -277,9 +289,17 @@ async function planMigration(db, dialect, opts = {}) {
             slug: row.slug,
             locale: row.locale,
             oldName: row.name,
-            oldOrder: row.ord,
+            oldOrder: row.order,
             name: desiredName,
             order: c.order,
+          });
+          plan.snapshot.touches.push({
+            uid: UID.category,
+            id: row.id,
+            slug: row.slug,
+            locale: row.locale,
+            field: 'name/order',
+            before: { name: row.name, order: row.order },
           });
         }
       }
@@ -289,108 +309,117 @@ async function planMigration(db, dialect, opts = {}) {
   const craftsRows = catsBySlug.get('crafts') || [];
   plan.craftsColorNote = craftsRows.length === 0 || craftsRows.every((r) => !r.color);
 
-  // ---- Listing documents + current category links --------------------------
+  // ---- Listings + current category -------------------------------------
 
-  const listingRows = await q(
-    `SELECT id, document_id, slug, title, locale, published_at, hide_contact FROM listings ORDER BY id`
+  const listingRows = await strapi.db.query(UID.listing).findMany({
+    select: ['id', 'documentId', 'slug', 'locale', 'publishedAt', 'hideContact'],
+    populate: {
+      category: { select: ['id', 'slug', 'locale', 'publishedAt'] },
+      community: { select: ['id', 'slug'] },
+    },
+    orderBy: { id: 'asc' },
+  });
+  const listingsByDoc = groupBy(listingRows, (r) => r.documentId);
+
+  // Category links per listing row, straight from the join table. Real data has
+  // draft rows linked to PUBLISHED category rows (or to two rows at once); the
+  // Document Service cannot resolve those, so they are re-linked in place.
+  const categoryJoin = strapi.db.metadata.get(UID.listing).attributes.category.joinTable;
+  const linkCounts = new Map(
+    (
+      await strapi.db
+        .connection(categoryJoin.name)
+        .select(categoryJoin.joinColumn.name)
+        .count('* as n')
+        .groupBy(categoryJoin.joinColumn.name)
+    ).map((r) => [Number(r[categoryJoin.joinColumn.name]), Number(r.n)])
   );
-  const listingsByDoc = new Map();
-  for (const r of listingRows) {
-    if (!listingsByDoc.has(r.document_id)) listingsByDoc.set(r.document_id, []);
-    listingsByDoc.get(r.document_id).push(r);
-  }
+  const isAligned = (row) =>
+    Boolean(row.category) &&
+    row.category.locale === row.locale &&
+    (row.category.publishedAt == null) === (row.publishedAt == null) &&
+    linkCounts.get(row.id) === 1;
 
-  const catLnkRows = await q(
-    `SELECT lc.id, lc.listing_id, lc.category_id, c.slug AS cat_slug, l.slug AS listing_slug, l.locale
-       FROM listings_category_lnk lc
-       JOIN categories c ON c.id = lc.category_id
-       JOIN listings l ON l.id = lc.listing_id
-      ORDER BY lc.id`
-  );
-  const lnksByListing = new Map();
-  for (const r of catLnkRows) {
-    if (!lnksByListing.has(r.listing_id)) lnksByListing.set(r.listing_id, []);
-    lnksByListing.get(r.listing_id).push(r);
-  }
-
-  const movesByListing = new Map();
-  for (const [docId, rows] of listingsByDoc) {
+  const movesByRowId = new Map();
+  for (const [, rows] of listingsByDoc) {
     const docSlug = rows[0].slug;
     const craftsOverride = craftsSlugs.includes(docSlug);
+    // Category a row without one inherits: the mapped category of a sibling row
+    // (same document), preferring es-MX. Real data has EN rows never linked.
+    const siblingWithCategory =
+      rows.find((r) => r.category && r.locale === DEFAULT_LOCALE) || rows.find((r) => r.category);
+    const inheritedSlug = siblingWithCategory
+      ? LEGACY_CATEGORY_TARGET[siblingWithCategory.category.slug] || siblingWithCategory.category.slug
+      : null;
     for (const row of rows) {
-      const links = lnksByListing.get(row.id) || [];
-      if (links.length === 0) {
-        plan.listingCategory.rowsWithoutCategory++;
+      const currentSlug = row.category ? row.category.slug : null;
+      let targetSlug = null;
+      let fromSlug = null;
+      if (craftsOverride) {
+        if (currentSlug !== 'crafts') {
+          targetSlug = 'crafts';
+          fromSlug = currentSlug;
+        }
+      } else if (currentSlug && LEGACY_CATEGORY_TARGET[currentSlug]) {
+        targetSlug = LEGACY_CATEGORY_TARGET[currentSlug];
+        fromSlug = currentSlug;
+      } else if (!currentSlug && inheritedSlug) {
+        targetSlug = inheritedSlug;
+      } else if (currentSlug && !isAligned(row)) {
+        targetSlug = currentSlug;
+        fromSlug = currentSlug;
+      }
+      if (!targetSlug) {
+        plan.listingCategory.keptRows++;
         continue;
       }
-      if (craftsOverride) {
-        const toDelete = links.filter((l) => l.cat_slug !== 'crafts');
-        if (toDelete.length === 0) {
-          plan.listingCategory.keptRows++;
-          continue;
-        }
-        const move = {
-          listing_id: row.id,
-          slug: docSlug,
-          locale: row.locale,
-          isDraft: row.published_at == null,
-          deleteLnkIds: toDelete.map((l) => l.id),
-          fromSlugs: [...new Set(toDelete.map((l) => l.cat_slug))],
-          targetSlug: 'crafts',
-        };
-        plan.listingCategory.moves.push(move);
-        movesByListing.set(row.id, move);
-      } else {
-        const legacy = LEGACY_CATEGORY_ORDER.flatMap((s) => links.filter((l) => l.cat_slug === s));
-        if (legacy.length === 0) {
-          plan.listingCategory.keptRows++;
-          continue;
-        }
-        const move = {
-          listing_id: row.id,
-          slug: docSlug,
-          locale: row.locale,
-          isDraft: row.published_at == null,
-          deleteLnkIds: legacy.map((l) => l.id),
-          fromSlugs: [...new Set(legacy.map((l) => l.cat_slug))],
-          targetSlug: LEGACY_CATEGORY_TARGET[legacy[0].cat_slug],
-        };
-        plan.listingCategory.moves.push(move);
-        movesByListing.set(row.id, move);
-      }
+      const isDraft = row.publishedAt == null;
+      const move = { listingRowId: row.id, slug: docSlug, locale: row.locale, isDraft, fromSlug, targetSlug };
+      plan.listingCategory.moves.push(move);
+      movesByRowId.set(row.id, move);
+      plan.snapshot.touches.push({
+        uid: UID.listing,
+        id: row.id,
+        slug: docSlug,
+        locale: row.locale,
+        field: 'category',
+        before: currentSlug,
+      });
     }
   }
 
-  // Final category per document (virtual state after the moves above).
+  // Final category slug per document (after the virtual moves above).
   const finalSlugsByDoc = new Map();
   for (const [docId, rows] of listingsByDoc) {
     const finals = new Set();
     for (const row of rows) {
-      const move = movesByListing.get(row.id);
-      if (move) finals.add(move.targetSlug);
-      for (const l of lnksByListing.get(row.id) || []) {
-        if (!move || !move.deleteLnkIds.includes(l.id)) finals.add(l.cat_slug);
-      }
+      const move = movesByRowId.get(row.id);
+      finals.add(move ? move.targetSlug : row.category ? row.category.slug : null);
     }
     finalSlugsByDoc.set(docId, finals);
   }
 
   // hideContact AFTER all category moves: services docs only, ALL their rows.
-  const listingById = new Map(listingRows.map((r) => [r.id, r]));
   for (const [docId, rows] of listingsByDoc) {
     if (!finalSlugsByDoc.get(docId).has('services')) continue;
     for (const row of rows) {
-      if (row.hide_contact) {
+      if (row.hideContact) {
         plan.hideContact.alreadyHidden++;
       } else {
-        plan.hideContact.rows.push({ id: row.id, slug: rows[0].slug });
-        plan.snapshot.hideContactRows.push({ id: row.id, slug: rows[0].slug, hide_contact: row.hide_contact ? 1 : 0 });
+        plan.hideContact.rows.push({ id: row.id, slug: rows[0].slug, locale: row.locale });
+        plan.snapshot.touches.push({
+          uid: UID.listing,
+          id: row.id,
+          slug: rows[0].slug,
+          locale: row.locale,
+          field: 'hideContact',
+          before: false,
+        });
       }
     }
   }
 
-  // Manual review: every services listing that was not moved into crafts is
-  // a crafts candidate (known artisan set first).
+  // Manual review: every services listing not moved into crafts.
   const craftsCandidates = [];
   for (const [docId, rows] of listingsByDoc) {
     if (!finalSlugsByDoc.get(docId).has('services')) continue;
@@ -403,50 +432,48 @@ async function planMigration(db, dialect, opts = {}) {
 
   // ---- Step 2 · Communities -------------------------------------------------
 
-  const communityRows = await q(`SELECT id, document_id, slug, locale, published_at FROM communities`);
-  plan.communities.existingRows = communityRows;
-  const commBySlug = new Map();
-  for (const r of communityRows) {
-    if (!commBySlug.has(r.slug)) commBySlug.set(r.slug, []);
-    commBySlug.get(r.slug).push(r);
+  const commRows = await strapi.db.query(UID.community).findMany({
+    select: ['id', 'documentId', 'slug', 'locale', 'publishedAt'],
+  });
+  const commBySlug = groupBy(commRows, (r) => r.slug);
+
+  const guideByLocale = new Map();
+  for (const locale of LOCALES) {
+    const rows = await strapi.db.query(UID.guidePage).findMany({
+      where: { locale },
+      select: ['id', 'historyText', 'influenceText', 'fishingText', 'drivingTipsHeader', 'publishedAt'],
+      populate: {
+        historyHeader: true,
+        historyMilestones: true,
+        influenceHeader: true,
+        fishingHeader: true,
+        recommendationsHeader: true,
+        fishingRules: true,
+        recommendations: true,
+        drivingTips: true,
+        protectedArea: true,
+      },
+    });
+    guideByLocale.set(locale, rows.find((r) => r.publishedAt != null) || rows[0] || null);
   }
-
-  const pickGuideRow = (locale) =>
-    q(
-      `SELECT id, locale, published_at, history_text, influence_text, fishing_text, driving_tips_header
-         FROM guide_pages
-        WHERE locale = $1
-        ORDER BY (CASE WHEN published_at IS NULL THEN 1 ELSE 0 END), published_at DESC`,
-      [locale]
-    ).then((rows) => rows[0] || null);
-
-  const guideComponent = (guideId, field, type, cmpTable, cols) =>
-    q(
-      `SELECT gc.cmp_id, gc.${quoteIdent('order')} AS ord, ${cols.map((c) => `t.${quoteIdent(c)}`).join(', ')}
-          FROM guide_pages_cmps gc JOIN ${cmpTable} t ON t.id = gc.cmp_id
-         WHERE gc.entity_id = $1 AND gc.field = $2 AND gc.component_type = $3
-         ORDER BY gc.${quoteIdent('order')}`,
-      [guideId, field, type]
-    );
 
   for (const c of COMMUNITY_CONTRACT) {
     if ((commBySlug.get(c.slug) || []).length > 0) {
       plan.communities.skippedSlugs.push(c.slug);
       continue;
     }
-    const perLocale = [];
+    const perLocale = {};
     for (const locale of LOCALES) {
-      const guide = await pickGuideRow(locale);
-      const header = guide ? (await guideComponent(guide.id, 'historyHeader', 'section.section-header', 'components_section_section_headers', ['title', 'subtitle']))[0] : null;
-      const milestones = guide
-        ? await guideComponent(guide.id, 'historyMilestones', 'guide.milestone', 'components_guide_milestones', ['year', 'text'])
-        : [];
-      perLocale.push({
-        locale,
-        history_text: guide ? guide.history_text : null,
-        historyHeader: header ? { title: header.title, subtitle: header.subtitle } : null,
-        historyMilestones: milestones.map((m) => ({ year: m.year, text: m.text })),
-      });
+      const guide = guideByLocale.get(locale);
+      perLocale[locale] = {
+        historyText: guide ? guide.historyText : null,
+        historyHeader: guide && guide.historyHeader
+          ? { title: guide.historyHeader.title, subtitle: guide.historyHeader.subtitle ?? null }
+          : null,
+        historyMilestones: guide
+          ? guide.historyMilestones.map((m) => ({ year: m.year, text: m.text }))
+          : [],
+      };
     }
     plan.communities.createDocs.push({
       slug: c.slug,
@@ -455,36 +482,31 @@ async function planMigration(db, dialect, opts = {}) {
       color: c.color,
       textColor: c.textColor,
       coords: c.coords,
-      document_id: newDocumentId(),
-      published_at: plan.now,
       perLocale,
     });
+    plan.snapshot.newDocuments.push({ uid: UID.community, slug: c.slug });
   }
   const communitySlugsPlanned = new Set(plan.communities.createDocs.map((d) => d.slug));
-  const commRowBySlugLocale = new Map();
-  for (const r of communityRows) commRowBySlugLocale.set(`${r.slug}:${r.locale}`, r);
 
   // ---- Step 3 · Listings -> community ---------------------------------------
 
-  const existingListingComm = await q(`SELECT listing_id, community_id FROM listings_community_lnk`);
-  const existingListingPairs = new Set(existingListingComm.map((r) => `${r.listing_id}:${r.community_id}`));
+  const memberRows = await strapi.db.query(UID.member).findMany({
+    select: ['id', 'documentId', 'slug', 'name', 'locale', 'locality', 'role', 'publishedAt'],
+    populate: { listings: { select: ['id'] }, community: { select: ['id', 'slug'] } },
+    orderBy: { id: 'asc' },
+  });
 
-  const memberRows = await q(
-    `SELECT id, document_id, slug, name, locale, locality, role FROM community_members ORDER BY id`
-  );
-  const memberById = new Map(memberRows.map((r) => [r.id, r]));
-  const memberListingLnks = await q(
-    `SELECT community_member_id, listing_id FROM community_members_listings_lnk`
-  );
-  const localityByListingRow = new Map();
-  for (const l of memberListingLnks) {
-    const m = memberById.get(l.community_member_id);
-    if (m && m.locality && LOCALITY_TO_COMMUNITY[m.locality] && !localityByListingRow.has(l.listing_id)) {
-      localityByListingRow.set(l.listing_id, m.locality);
+  const localityByListingRowId = new Map();
+  for (const m of memberRows) {
+    if (!m.locality || !LOCALITY_TO_COMMUNITY[m.locality]) continue;
+    for (const l of m.listings || []) {
+      if (!localityByListingRowId.has(l.id)) localityByListingRowId.set(l.id, m.locality);
     }
   }
 
-  for (const [docId, rows] of listingsByDoc) {
+  const communityAvailable = (slug) => (commBySlug.get(slug) || []).length > 0 || communitySlugsPlanned.has(slug);
+
+  for (const [, rows] of listingsByDoc) {
     const slug = rows[0].slug;
     let communitySlug = null;
     let source = null;
@@ -496,7 +518,7 @@ async function planMigration(db, dialect, opts = {}) {
       source = 'embedded table';
     } else {
       for (const row of rows) {
-        const loc = localityByListingRow.get(row.id);
+        const loc = localityByListingRowId.get(row.id);
         if (loc) {
           communitySlug = LOCALITY_TO_COMMUNITY[loc];
           source = `member locality (${loc})`;
@@ -505,32 +527,50 @@ async function planMigration(db, dialect, opts = {}) {
       }
     }
     if (!communitySlug) {
-      plan.listingCommunity.unresolved.push({ kind: 'listing->community', slug, reason: 'no source resolved (--map, embedded table, member locality)' });
+      plan.listingCommunity.unresolved.push({
+        kind: 'listing->community',
+        slug,
+        reason: 'no source resolved (--map, embedded table, member locality)',
+      });
       continue;
     }
     for (const row of rows) {
-      const commRow = commRowBySlugLocale.get(`${communitySlug}:${row.locale}`);
-      if (!commRow && !communitySlugsPlanned.has(communitySlug)) {
-        plan.warnings.push(`no ${communitySlug} community row for locale ${row.locale}; listing ${slug} row #${row.id} left unlinked`);
-        continue;
-      }
-      if (commRow && existingListingPairs.has(`${row.id}:${commRow.id}`)) {
+      const currentSlug = row.community ? row.community.slug : null;
+      if (currentSlug === communitySlug) {
         plan.listingCommunity.existingPairs++;
         continue;
       }
-      plan.listingCommunity.links.push({ listing_id: row.id, slug, locale: row.locale, communitySlug, source });
+      if (!communityAvailable(communitySlug)) {
+        plan.warnings.push(
+          `no ${communitySlug} community row for locale ${row.locale}; listing ${slug} row #${row.id} left unlinked`
+        );
+        continue;
+      }
+      const isDraft = row.publishedAt == null;
+      plan.listingCommunity.links.push({
+        listingRowId: row.id,
+        slug,
+        locale: row.locale,
+        isDraft,
+        communitySlug,
+        source,
+      });
+      plan.snapshot.touches.push({
+        uid: UID.listing,
+        id: row.id,
+        slug,
+        locale: row.locale,
+        field: 'community',
+        before: currentSlug,
+      });
     }
   }
 
   // ---- Step 4 · Members -> community -----------------------------------------
 
-  const existingMemberComm = await q(
-    `SELECT community_member_id, community_id FROM community_members_community_lnk`
-  );
-  const existingMemberPairs = new Set(existingMemberComm.map((r) => `${r.community_member_id}:${r.community_id}`));
   const noLocalitySlugs = new Set();
-
   for (const m of memberRows) {
+    const currentSlug = m.community ? m.community.slug : null;
     if (!m.locality) {
       if (!noLocalitySlugs.has(m.slug)) {
         noLocalitySlugs.add(m.slug);
@@ -546,123 +586,97 @@ async function planMigration(db, dialect, opts = {}) {
       }
       continue;
     }
-    const commRow = commRowBySlugLocale.get(`${communitySlug}:${m.locale}`);
-    if (!commRow && !communitySlugsPlanned.has(communitySlug)) {
-      plan.warnings.push(`no ${communitySlug} community row for locale ${m.locale}; member ${m.slug} row #${m.id} left unlinked`);
-      continue;
-    }
-    if (commRow && existingMemberPairs.has(`${m.id}:${commRow.id}`)) {
+    if (currentSlug === communitySlug) {
       plan.memberCommunity.existingPairs++;
       continue;
     }
-    plan.memberCommunity.links.push({ community_member_id: m.id, slug: m.slug, locale: m.locale, communitySlug });
+    if (!communityAvailable(communitySlug)) {
+      plan.warnings.push(
+        `no ${communitySlug} community row for locale ${m.locale}; member ${m.slug} row #${m.id} left unlinked`
+      );
+      continue;
+    }
+    const isDraft = m.publishedAt == null;
+    plan.memberCommunity.links.push({ memberRowId: m.id, slug: m.slug, locale: m.locale, isDraft, communitySlug });
+    plan.snapshot.touches.push({
+      uid: UID.member,
+      id: m.id,
+      slug: m.slug,
+      locale: m.locale,
+      field: 'community',
+      before: currentSlug,
+    });
   }
 
   // ---- Step 5 · Artisans group listing ---------------------------------------
 
-  if (listingRows.some((r) => r.slug === ARTISAN_LISTING.slug)) {
+  const artisanExists = listingRows.some((r) => r.slug === ARTISAN_LISTING.slug);
+  if (artisanExists) {
     plan.artisan.skipped = true;
   } else {
-    plan.artisan.create = {
-      document_id: newDocumentId(),
-      rows: LOCALES.map((locale) => ({
-        locale,
-        title: ARTISAN_LISTING.title[locale],
-        slug: ARTISAN_LISTING.slug,
-        short_description: null,
-        hide_contact: 0,
-        order: 0,
-        is_featured: 0,
-        published_at: null,
-      })),
-    };
-    const membersByDoc = new Map();
-    for (const r of memberRows) {
-      if (!membersByDoc.has(r.document_id)) membersByDoc.set(r.document_id, []);
-      membersByDoc.get(r.document_id).push(r);
-    }
-    for (const [docId, mrows] of membersByDoc) {
+    plan.artisan.create = { slug: ARTISAN_LISTING.slug, title: ARTISAN_LISTING.title };
+    plan.snapshot.newDocuments.push({ uid: UID.listing, slug: ARTISAN_LISTING.slug });
+    const membersByDoc = groupBy(memberRows, (m) => m.documentId);
+    for (const [, mrows] of membersByDoc) {
       const communitySlugs = new Set(
         mrows.map((r) => r.locality).filter(Boolean).map((l) => LOCALITY_TO_COMMUNITY[l]).filter(Boolean)
       );
       const roleMatch = mrows.some((r) => r.role && ARTISAN_ROLE_RE.test(r.role));
       if (!communitySlugs.has(ARTISAN_LISTING.communitySlug) || !roleMatch) continue;
       for (const m of mrows) {
-        plan.artisan.memberLinks.push({ community_member_id: m.id, locale: m.locale, name: m.name, slug: m.slug });
+        plan.artisan.memberLinks.push({ memberRowId: m.id, locale: m.locale, name: m.name, slug: m.slug });
       }
       plan.artisan.linkedMembers.push({ name: mrows[0].name, slug: mrows[0].slug });
     }
   }
 
-  // --crafts entries pointing at nothing: warn (likely a typo).
+  // --crafts / --map entries pointing at nothing: warn (likely a typo).
   const knownListingSlugs = new Set(listingRows.map((r) => r.slug));
   for (const s of craftsSlugs) {
     if (!knownListingSlugs.has(s)) plan.warnings.push(`--crafts slug '${s}' matches no listing document`);
   }
-  for (const [slug] of Object.entries(mapOverrides)) {
+  for (const slug of Object.keys(mapOverrides)) {
     if (!knownListingSlugs.has(slug)) plan.warnings.push(`--map slug '${slug}' matches no listing document`);
   }
 
   // ---- Step 6 · Good-practices page ------------------------------------------
 
-  const gpRows = await q(`SELECT id FROM good_practices_pages`);
+  const gpRows = await strapi.db.query(UID.goodPractices).findMany({ select: ['id'] });
   if (gpRows.length > 0) {
     plan.goodPractices.skipped = true;
   } else {
-    const perLocale = [];
+    const perLocale = {};
     for (const locale of LOCALES) {
-      const guide = await pickGuideRow(locale);
-      const header = (field) =>
-        guide
-          ? guideComponent(guide.id, field, 'section.section-header', 'components_section_section_headers', ['title', 'subtitle']).then((r) => r[0] || null)
-          : Promise.resolve(null);
-      const textItems = (field) =>
-        guide
-          ? guideComponent(guide.id, field, 'guide.text-list-item', 'components_guide_text_list_items', ['text']).then((r) => r.map((x) => x.text))
-          : Promise.resolve([]);
-      const protectedArea = guide
-        ? (
-            await guideComponent(
-              guide.id,
-              'protectedArea',
-              'guide.protected-link',
-              'components_guide_protected_links',
-              ['title', 'text', 'link_label', 'link_href']
-            )
-          )[0] || null
-        : null;
-      perLocale.push({
-        locale,
-        influence_text: guide ? guide.influence_text : null,
-        fishing_text: guide ? guide.fishing_text : null,
-        protectedArea: protectedArea
-          ? { title: protectedArea.title, text: protectedArea.text, link_label: protectedArea.link_label, link_href: protectedArea.link_href }
+      const guide = guideByLocale.get(locale);
+      perLocale[locale] = {
+        influenceText: guide ? guide.influenceText : null,
+        fishingText: guide ? guide.fishingText : null,
+        protectedArea: guide && guide.protectedArea
+          ? {
+              title: guide.protectedArea.title,
+              text: guide.protectedArea.text,
+              linkLabel: guide.protectedArea.linkLabel,
+              linkHref: guide.protectedArea.linkHref,
+            }
           : null,
-        influenceHeader: await header('influenceHeader'),
-        fishingHeader: await header('fishingHeader'),
-        recommendationsHeader: await header('recommendationsHeader'),
-        fishingRules: await textItems('fishingRules'),
-        recommendations: await textItems('recommendations'),
-        tipsHeader: guide && guide.driving_tips_header != null ? { title: guide.driving_tips_header, subtitle: null } : null,
-        tips: await textItems('drivingTips'),
-      });
+        influenceHeader: guide && guide.influenceHeader
+          ? { title: guide.influenceHeader.title, subtitle: guide.influenceHeader.subtitle ?? null }
+          : null,
+        fishingHeader: guide && guide.fishingHeader
+          ? { title: guide.fishingHeader.title, subtitle: guide.fishingHeader.subtitle ?? null }
+          : null,
+        recommendationsHeader: guide && guide.recommendationsHeader
+          ? { title: guide.recommendationsHeader.title, subtitle: guide.recommendationsHeader.subtitle ?? null }
+          : null,
+        fishingRules: guide ? guide.fishingRules.map((r) => r.text) : [],
+        recommendations: guide ? guide.recommendations.map((r) => r.text) : [],
+        tipsHeader: guide && guide.drivingTipsHeader != null ? { title: guide.drivingTipsHeader, subtitle: null } : null,
+        tips: guide ? guide.drivingTips.map((r) => r.text) : [],
+      };
     }
-    plan.goodPractices.create = { document_id: newDocumentId(), internal_label: GOOD_PRACTICES_LABEL, perLocale };
+    plan.goodPractices.create = { perLocale };
+    plan.snapshot.newDocuments.push({ uid: UID.goodPractices, slug: 'good-practices-page' });
   }
-
-  // ---- Snapshot pre-state -----------------------------------------------------
-
-  const deleteLnkIds = new Set(plan.listingCategory.moves.flatMap((m) => m.deleteLnkIds));
-  plan.snapshot.categoryLinks = catLnkRows
-    .filter((r) => deleteLnkIds.has(r.id))
-    .map((r) => ({
-      id: r.id,
-      listing_id: r.listing_id,
-      listing_slug: r.listing_slug,
-      locale: r.locale,
-      category_id: r.category_id,
-      category_slug: r.cat_slug,
-    }));
 
   return plan;
 }
@@ -680,308 +694,216 @@ const planHasWork = (plan) =>
 
 // ---- Snapshot ----------------------------------------------------------------
 
-function buildSnapshot(dialect, target, plan) {
+function buildSnapshot(plan) {
   return {
     generatedAt: new Date().toISOString(),
-    dialect,
-    target: dialect === 'postgres' ? '<redacted>' : target,
     script: 'migrate-redesign.js',
-    preState: {
-      categoriesToUpdate: plan.categories.updateRows.map((r) => ({
-        id: r.id,
-        slug: r.slug,
-        locale: r.locale,
-        name: r.oldName,
-        ord: r.oldOrder,
-      })),
-      categoryLinksToDelete: plan.snapshot.categoryLinks,
-      listingsToHideContact: plan.snapshot.hideContactRows,
-    },
+    preState: plan.snapshot.touches,
+    newDocuments: plan.snapshot.newDocuments,
     planned: {
       categoriesCreated: plan.categories.createDocs.map((d) => d.slug),
+      categoriesUpdated: plan.categories.updateRows.length,
+      listingCategoryMoves: plan.listingCategory.moves.length,
+      hideContactRows: plan.hideContact.rows.length,
       communitiesCreated: plan.communities.createDocs.map((d) => d.slug),
       listingCommunityLinks: plan.listingCommunity.links.length,
       memberCommunityLinks: plan.memberCommunity.links.length,
-      artisanListingCreated: plan.artisan.create ? plan.artisan.create.rows[0].slug : null,
+      artisanListingCreated: plan.artisan.create ? plan.artisan.create.slug : null,
       goodPracticesPageCreated: plan.goodPractices.create !== null,
     },
   };
 }
 
+// ---- Data builders for Document Service creates ------------------------------
+
+function buildCommunityData(doc, locale) {
+  const loc = doc.perLocale[locale];
+  const data = {
+    name: doc.name,
+    slug: doc.slug,
+    order: doc.order,
+    color: doc.color,
+    textColor: doc.textColor,
+    location: { geoPoint: { lat: doc.coords.lat, lng: doc.coords.lng } },
+    historyText: loc.historyText,
+    historyMilestones: loc.historyMilestones,
+  };
+  if (loc.historyHeader) data.historyHeader = loc.historyHeader;
+  return data;
+}
+
+function buildGoodPracticesData(loc) {
+  const data = {
+    internalLabel: GOOD_PRACTICES_LABEL,
+    influenceText: loc.influenceText,
+    fishingText: loc.fishingText,
+    fishingRules: loc.fishingRules.map((text) => ({ text })),
+    recommendations: loc.recommendations.map((text) => ({ text })),
+    tips: loc.tips.map((text) => ({ text })),
+  };
+  if (loc.protectedArea) data.protectedArea = loc.protectedArea;
+  if (loc.influenceHeader) data.influenceHeader = loc.influenceHeader;
+  if (loc.fishingHeader) data.fishingHeader = loc.fishingHeader;
+  if (loc.recommendationsHeader) data.recommendationsHeader = loc.recommendationsHeader;
+  if (loc.tipsHeader) data.tipsHeader = loc.tipsHeader;
+  return data;
+}
+
 // ---- Apply ---------------------------------------------------------------------
 
-async function applyMigration(db, dialect, plan, opts = {}) {
-  const { snapshotPath, target } = opts;
+async function applyMigration(strapi, plan, opts = {}) {
+  const { snapshotPath } = opts;
   if (snapshotPath) {
-    const snap = buildSnapshot(dialect, target, plan);
+    const snap = buildSnapshot(plan);
     fs.mkdirSync(path.dirname(snapshotPath), { recursive: true });
     fs.writeFileSync(snapshotPath, `${JSON.stringify(snap, null, 2)}\n`);
   }
 
-  const x = (sql, params) =>
-    dialect === 'sqlite' ? db.prepare(sql).run(...params) : db.query(sql, params);
-  const insertReturningId = async (table, cols, values) => {
-    const params = [];
-    const phs = values.map((v) => {
-      params.push(v);
-      return dialect === 'sqlite' ? '?' : `$${params.length}`;
-    });
-    const colList = cols.map(quoteIdent).join(', ');
-    if (dialect === 'sqlite') {
-      const res = x(`INSERT INTO ${table} (${colList}) VALUES (${phs.join(', ')})`, params);
-      return Number(res.lastInsertRowid);
-    }
-    const res = await db.query(
-      `INSERT INTO ${table} (${colList}) VALUES (${phs.join(', ')}) RETURNING id`,
-      params
-    );
-    return res.rows[0].id;
-  };
-  // geo_point is a json column: plain text bind on sqlite, explicit cast on pg.
-  const insertGeoPoint = async (coords) => {
-    const json = JSON.stringify({ lat: coords.lat, lng: coords.lng });
-    if (dialect === 'postgres') {
-      const res = await db.query(`INSERT INTO components_location_geo_points (geo_point) VALUES ($1::json) RETURNING id`, [json]);
-      return res.rows[0].id;
-    }
-    const res = x(`INSERT INTO components_location_geo_points (geo_point) VALUES (?)`, [json]);
-    return Number(res.lastInsertRowid);
-  };
-  const insertCmpLink = (table, entity_id, cmp_id, componentType, field, order) =>
-    x(
-      `INSERT INTO ${table} (entity_id, cmp_id, component_type, field, ${quoteIdent('order')})
-       VALUES (${ph(dialect, 1)}, ${ph(dialect, 2)}, ${ph(dialect, 3)}, ${ph(dialect, 4)}, ${ph(dialect, 5)})`,
-      [entity_id, cmp_id, componentType, field, order]
-    );
-
-  // Row resolvers for link targets: existing rows + rows created below.
-  const rowIndex = new Map(); // `${kind}:${slug}:${locale}` -> [{ id, draft }]
-  const indexRow = (kind, slug, locale, id, draft) => {
-    const key = `${kind}:${slug}:${locale}`;
-    if (!rowIndex.has(key)) rowIndex.set(key, []);
-    rowIndex.get(key).push({ id, draft });
-  };
-  for (const r of plan.categories.existingRows) indexRow('category', r.slug, r.locale, r.id, r.published_at == null);
-  for (const r of plan.communities.existingRows) indexRow('community', r.slug, r.locale, r.id, r.published_at == null);
-  // Draft listing rows prefer draft targets, published rows prefer published
-  // targets; fall back to whatever exists in that locale.
-  const resolveRow = (kind, slug, locale, preferDraft) => {
-    const list = rowIndex.get(`${kind}:${slug}:${locale}`) || [];
-    if (list.length === 0) return null;
-    return (preferDraft ? list.find((r) => r.draft) : list.find((r) => !r.draft)) || list[0];
+  const totals = {
+    categoriesCreated: plan.categories.createDocs.length * LOCALES.length,
+    categoriesUpdated: plan.categories.updateRows.length,
+    listingRowsRelinked: plan.listingCategory.moves.length,
+    hideContactRows: plan.hideContact.rows.length,
+    communitiesCreated: plan.communities.createDocs.length * LOCALES.length,
+    listingCommunityLinks: plan.listingCommunity.links.length,
+    memberCommunityLinks: plan.memberCommunity.links.length,
+    artisanRows: plan.artisan.create ? LOCALES.length : 0,
+    goodPracticesRows: plan.goodPractices.create ? LOCALES.length : 0,
+    snapshotPath: snapshotPath || null,
   };
 
-  const TRUE = dialect === 'postgres' ? true : 1;
-
-  const run = async () => {
-    // 1. Categories: create then update (updates also fix rows of mixed docs).
+  await strapi.db.transaction(async () => {
+    // 1. Categories: create missing docs, then relabel/reorder existing rows.
     for (const doc of plan.categories.createDocs) {
-      for (const row of doc.rows) {
-        const id = await insertReturningId(
-          'categories',
-          ['document_id', 'name', 'slug', 'color', 'order', 'published_at', 'locale', 'created_at', 'updated_at'],
-          [doc.document_id, row.name, doc.slug, doc.color, doc.order, row.published_at, row.locale, plan.now, plan.now]
-        );
-        indexRow('category', doc.slug, row.locale, id, false);
-      }
+      const es = await strapi.documents(UID.category).create({
+        data: { name: doc.name[DEFAULT_LOCALE], slug: doc.slug, order: doc.order, color: doc.color },
+        locale: DEFAULT_LOCALE,
+        status: 'published',
+      });
+      await strapi.documents(UID.category).update({
+        documentId: es.documentId,
+        locale: SECOND_LOCALE,
+        data: { name: doc.name[SECOND_LOCALE], slug: doc.slug, order: doc.order, color: doc.color },
+        status: 'published',
+      });
     }
     for (const r of plan.categories.updateRows) {
-      await x(
-        `UPDATE categories SET name = ${ph(dialect, 1)}, ${quoteIdent('order')} = ${ph(dialect, 2)}, updated_at = ${ph(dialect, 3)} WHERE id = ${ph(dialect, 4)}`,
-        [r.name, r.order, plan.now, r.id]
-      );
+      await strapi.db.query(UID.category).update({ where: { id: r.id }, data: { name: r.name, order: r.order } });
     }
+
+    const categoryIdx = await reindexRows(strapi, UID.category);
 
     // 2. Listing category moves (per physical row, same-locale target).
     for (const m of plan.listingCategory.moves) {
-      for (const lnkId of m.deleteLnkIds) {
-        await x(`DELETE FROM listings_category_lnk WHERE id = ${ph(dialect, 1)}`, [lnkId]);
-      }
-      const target = resolveRow('category', m.targetSlug, m.locale, m.isDraft);
+      const target = resolveRow(categoryIdx, m.targetSlug, m.locale, m.isDraft);
       if (!target) {
-        console.warn(`[WARN] no ${m.targetSlug} category row for locale ${m.locale}; listing ${m.slug} row #${m.listing_id} left without category`);
+        strapi.log.warn(`[migrate-redesign] no ${m.targetSlug} category row for locale ${m.locale}; listing ${m.slug} row #${m.listingRowId} left without category`);
         continue;
       }
-      await x(
-        `INSERT INTO listings_category_lnk (listing_id, category_id, listing_ord, category_ord) VALUES (${ph(dialect, 1)}, ${ph(dialect, 2)}, 1, 1)`,
-        [m.listing_id, target.id]
-      );
+      await strapi.db.query(UID.listing).update({ where: { id: m.listingRowId }, data: { category: target.id } });
     }
 
     // 3. hideContact for final-category services docs (ALL rows).
     for (const r of plan.hideContact.rows) {
-      await x(
-        `UPDATE listings SET hide_contact = ${ph(dialect, 1)}, updated_at = ${ph(dialect, 2)} WHERE id = ${ph(dialect, 3)}`,
-        [TRUE, plan.now, r.id]
-      );
+      await strapi.db.query(UID.listing).update({ where: { id: r.id }, data: { hideContact: true } });
     }
 
-    // 4. Communities (+ duplicated history components + geo point).
+    // 4. Communities (+ duplicated history content).
     for (const doc of plan.communities.createDocs) {
-      for (const loc of doc.perLocale) {
-        const id = await insertReturningId(
-          'communities',
-          [
-            'document_id', 'name', 'slug', 'tagline', 'description', 'order', 'color', 'text_color',
-            'google_maps_url', 'history_text', 'tourist_map_caption', 'created_at', 'updated_at',
-            'published_at', 'locale',
-          ],
-          [
-            doc.document_id, doc.name, doc.slug, null, null, doc.order, doc.color, doc.textColor,
-            null, loc.history_text, null, plan.now, plan.now, doc.published_at, loc.locale,
-          ]
-        );
-        indexRow('community', doc.slug, loc.locale, id, false);
-        const geoId = await insertGeoPoint(doc.coords);
-        await insertCmpLink('communities_cmps', id, geoId, 'location.geo-point', 'location', 1);
-        if (loc.historyHeader) {
-          const shId = await insertReturningId(
-            'components_section_section_headers',
-            ['title', 'subtitle'],
-            [loc.historyHeader.title, loc.historyHeader.subtitle]
-          );
-          await insertCmpLink('communities_cmps', id, shId, 'section.section-header', 'historyHeader', 1);
-        }
-        for (let i = 0; i < loc.historyMilestones.length; i++) {
-          const m = loc.historyMilestones[i];
-          const mid = await insertReturningId('components_guide_milestones', ['year', 'text'], [m.year, m.text]);
-          await insertCmpLink('communities_cmps', id, mid, 'guide.milestone', 'historyMilestones', i + 1);
-        }
-      }
+      const es = await strapi.documents(UID.community).create({
+        data: buildCommunityData(doc, DEFAULT_LOCALE),
+        locale: DEFAULT_LOCALE,
+        status: 'published',
+      });
+      await strapi.documents(UID.community).update({
+        documentId: es.documentId,
+        locale: SECOND_LOCALE,
+        data: buildCommunityData(doc, SECOND_LOCALE),
+        status: 'published',
+      });
     }
 
-    // 5. Listings -> community links (same-locale row, listing_ord NULL).
+    const communityIdx = await reindexRows(strapi, UID.community);
+
+    // 5. Listings -> community links (same-locale, same-status row).
     for (const l of plan.listingCommunity.links) {
-      const comm = resolveRow('community', l.communitySlug, l.locale, false);
+      const comm = resolveRow(communityIdx, l.communitySlug, l.locale, l.isDraft);
       if (!comm) {
-        console.warn(`[WARN] no ${l.communitySlug} community row for locale ${l.locale}; listing ${l.slug} row #${l.listing_id} left unlinked`);
+        strapi.log.warn(`[migrate-redesign] no ${l.communitySlug} community row for locale ${l.locale}; listing ${l.slug} row #${l.listingRowId} left unlinked`);
         continue;
       }
-      await x(
-        `INSERT INTO listings_community_lnk (listing_id, community_id, listing_ord) VALUES (${ph(dialect, 1)}, ${ph(dialect, 2)}, NULL)`,
-        [l.listing_id, comm.id]
-      );
+      await strapi.db.query(UID.listing).update({ where: { id: l.listingRowId }, data: { community: comm.id } });
     }
 
-    // 6. Members -> community links (same-locale row).
+    // 6. Members -> community links (same-locale, same-status row).
     for (const l of plan.memberCommunity.links) {
-      const comm = resolveRow('community', l.communitySlug, l.locale, false);
+      const comm = resolveRow(communityIdx, l.communitySlug, l.locale, l.isDraft);
       if (!comm) {
-        console.warn(`[WARN] no ${l.communitySlug} community row for locale ${l.locale}; member ${l.slug} row #${l.community_member_id} left unlinked`);
+        strapi.log.warn(`[migrate-redesign] no ${l.communitySlug} community row for locale ${l.locale}; member ${l.slug} row #${l.memberRowId} left unlinked`);
         continue;
       }
-      await x(
-        `INSERT INTO community_members_community_lnk (community_member_id, community_id, community_member_ord) VALUES (${ph(dialect, 1)}, ${ph(dialect, 2)}, NULL)`,
-        [l.community_member_id, comm.id]
-      );
+      await strapi.db.query(UID.member).update({ where: { id: l.memberRowId }, data: { community: comm.id } });
     }
 
-    // 7. Artisans group listing (draft) + links.
+    // 7. Artisans group listing (draft only) + member links.
     if (plan.artisan.create) {
-      const artisanIdsByLocale = new Map();
-      for (const row of plan.artisan.create.rows) {
-        const id = await insertReturningId(
-          'listings',
-          ['document_id', 'title', 'slug', 'short_description', 'hide_contact', 'order', 'is_featured', 'published_at', 'locale', 'created_at', 'updated_at'],
-          [
-            plan.artisan.create.document_id, row.title, row.slug, row.short_description,
-            dialect === 'postgres' ? false : 0, row.order, dialect === 'postgres' ? false : 0,
-            row.published_at, row.locale, plan.now, plan.now,
-          ]
-        );
-        artisanIdsByLocale.set(row.locale, id);
-        const cat = resolveRow('category', ARTISAN_LISTING.categorySlug, row.locale, true);
-        if (cat) {
-          await x(
-            `INSERT INTO listings_category_lnk (listing_id, category_id, listing_ord, category_ord) VALUES (${ph(dialect, 1)}, ${ph(dialect, 2)}, 1, 1)`,
-            [id, cat.id]
-          );
-        }
-        const comm = resolveRow('community', ARTISAN_LISTING.communitySlug, row.locale, false);
-        if (comm) {
-          await x(
-            `INSERT INTO listings_community_lnk (listing_id, community_id, listing_ord) VALUES (${ph(dialect, 1)}, ${ph(dialect, 2)}, NULL)`,
-            [id, comm.id]
-          );
-        }
+      const freshMembers = await strapi.db.query(UID.member).findMany({ select: ['id', 'slug', 'locale', 'publishedAt'] });
+      const memberDraftId = new Map();
+      for (const m of freshMembers) {
+        if (m.publishedAt == null) memberDraftId.set(`${m.slug}:${m.locale}`, m.id);
       }
-      // Member links: no UNIQUE on this table, so the plan-time skip logic is
-      // the only guard (creation path only — the plan skips when the artisan
-      // listing already exists).
-      for (const ml of plan.artisan.memberLinks) {
-        const target = artisanIdsByLocale.get(ml.locale);
-        if (!target) continue;
-        await x(
-          `INSERT INTO community_members_listings_lnk (community_member_id, listing_id, listing_ord, community_member_ord) VALUES (${ph(dialect, 1)}, ${ph(dialect, 2)}, NULL, NULL)`,
-          [ml.community_member_id, target]
-        );
-      }
+      const membersFor = (locale) =>
+        plan.artisan.memberLinks
+          .filter((l) => l.locale === locale)
+          .map((l) => memberDraftId.get(`${l.slug}:${locale}`))
+          .filter((id) => id != null);
+
+      const craftsEs = resolveRow(categoryIdx, ARTISAN_LISTING.categorySlug, DEFAULT_LOCALE, true);
+      const pavEs = resolveRow(communityIdx, ARTISAN_LISTING.communitySlug, DEFAULT_LOCALE, true);
+      const craftsEn = resolveRow(categoryIdx, ARTISAN_LISTING.categorySlug, SECOND_LOCALE, true);
+      const pavEn = resolveRow(communityIdx, ARTISAN_LISTING.communitySlug, SECOND_LOCALE, true);
+
+      const esListing = await strapi.documents(UID.listing).create({
+        data: {
+          title: ARTISAN_LISTING.title[DEFAULT_LOCALE],
+          slug: ARTISAN_LISTING.slug,
+          hideContact: false,
+          isFeatured: false,
+          order: 0,
+          category: craftsEs ? craftsEs.id : undefined,
+          community: pavEs ? pavEs.id : undefined,
+          members: membersFor(DEFAULT_LOCALE),
+        },
+        locale: DEFAULT_LOCALE,
+      });
+      await strapi.documents(UID.listing).update({
+        documentId: esListing.documentId,
+        locale: SECOND_LOCALE,
+        data: {
+          title: ARTISAN_LISTING.title[SECOND_LOCALE],
+          slug: ARTISAN_LISTING.slug,
+          category: craftsEn ? craftsEn.id : undefined,
+          community: pavEn ? pavEn.id : undefined,
+          members: membersFor(SECOND_LOCALE),
+        },
+      });
     }
 
-    // 8. Good-practices page (draft) with duplicated guide components.
+    // 8. Good-practices page (draft only) with duplicated guide content.
     if (plan.goodPractices.create) {
-      for (const loc of plan.goodPractices.create.perLocale) {
-        const gid = await insertReturningId(
-          'good_practices_pages',
-          ['document_id', 'internal_label', 'conanp_url', 'influence_text', 'fishing_text', 'created_at', 'updated_at', 'published_at', 'locale'],
-          [
-            plan.goodPractices.create.document_id, plan.goodPractices.create.internal_label, null,
-            loc.influence_text, loc.fishing_text, plan.now, plan.now, null, loc.locale,
-          ]
-        );
-        const linkHeader = async (field, header) => {
-          if (!header) return;
-          const shId = await insertReturningId(
-            'components_section_section_headers',
-            ['title', 'subtitle'],
-            [header.title, header.subtitle ?? null]
-          );
-          await insertCmpLink('good_practices_pages_cmps', gid, shId, 'section.section-header', field, 1);
-        };
-        const linkItems = async (field, texts) => {
-          for (let i = 0; i < texts.length; i++) {
-            const tid = await insertReturningId('components_guide_text_list_items', ['text'], [texts[i]]);
-            await insertCmpLink('good_practices_pages_cmps', gid, tid, 'guide.text-list-item', field, i + 1);
-          }
-        };
-        if (loc.protectedArea) {
-          const pid = await insertReturningId(
-            'components_guide_protected_links',
-            ['title', 'text', 'link_label', 'link_href'],
-            [loc.protectedArea.title, loc.protectedArea.text, loc.protectedArea.link_label, loc.protectedArea.link_href]
-          );
-          await insertCmpLink('good_practices_pages_cmps', gid, pid, 'guide.protected-link', 'protectedArea', 1);
-        }
-        await linkHeader('influenceHeader', loc.influenceHeader);
-        await linkHeader('fishingHeader', loc.fishingHeader);
-        await linkItems('fishingRules', loc.fishingRules);
-        await linkHeader('recommendationsHeader', loc.recommendationsHeader);
-        await linkItems('recommendations', loc.recommendations);
-        await linkHeader('tipsHeader', loc.tipsHeader);
-        await linkItems('tips', loc.tips);
-      }
+      const es = await strapi.documents(UID.goodPractices).create({
+        data: buildGoodPracticesData(plan.goodPractices.create.perLocale[DEFAULT_LOCALE]),
+        locale: DEFAULT_LOCALE,
+      });
+      await strapi.documents(UID.goodPractices).update({
+        documentId: es.documentId,
+        locale: SECOND_LOCALE,
+        data: buildGoodPracticesData(plan.goodPractices.create.perLocale[SECOND_LOCALE]),
+      });
     }
-  };
+  });
 
-  if (dialect === 'sqlite') {
-    db.exec('BEGIN');
-    try { await run(); db.exec('COMMIT'); } catch (e) { db.exec('ROLLBACK'); throw e; }
-  } else {
-    await x('BEGIN');
-    try { await run(); await x('COMMIT'); } catch (e) { await x('ROLLBACK'); throw e; }
-  }
-
-  return {
-    categoriesCreated: plan.categories.createDocs.reduce((n, d) => n + d.rows.length, 0),
-    categoriesUpdated: plan.categories.updateRows.length,
-    listingRowsRelinked: plan.listingCategory.moves.length,
-    hideContactRows: plan.hideContact.rows.length,
-    communitiesCreated: plan.communities.createDocs.reduce((n, d) => n + d.perLocale.length, 0),
-    listingCommunityLinks: plan.listingCommunity.links.length,
-    memberCommunityLinks: plan.memberCommunity.links.length,
-    artisanRows: plan.artisan.create ? plan.artisan.create.rows.length : 0,
-    goodPracticesRows: plan.goodPractices.create ? plan.goodPractices.create.perLocale.length : 0,
-  };
+  return totals;
 }
 
 // ---- Plan printing --------------------------------------------------------------
@@ -989,23 +911,20 @@ async function applyMigration(db, dialect, plan, opts = {}) {
 function printPlan(plan) {
   for (const d of plan.categories.createDocs) {
     console.log(
-      `[CATEGORY-CREATE] ${d.slug} — ${d.rows.map((r) => `${r.locale} "${r.name}"`).join(', ')} (order ${d.order}, color ${d.color ?? 'NULL'})`
+      `[CATEGORY-CREATE] ${d.slug} — ${LOCALES.map((l) => `${l} "${d.name[l]}"`).join(', ')} (order ${d.order}, color ${d.color ?? 'NULL'})`
     );
   }
   for (const r of plan.categories.updateRows) {
-    console.log(
-      `[CATEGORY-UPDATE] ${r.slug} ${r.locale}: "${r.oldName}" -> "${r.name}" (order ${r.oldOrder} -> ${r.order})`
-    );
+    console.log(`[CATEGORY-UPDATE] ${r.slug} ${r.locale}: "${r.oldName}" -> "${r.name}" (order ${r.oldOrder} -> ${r.order})`);
   }
   for (const m of plan.listingCategory.moves) {
-    console.log(`[RELINK] ${m.slug} (${m.locale})${m.isDraft ? ' [draft]' : ''}: ${m.fromSlugs.join(', ')} -> ${m.targetSlug}`);
+    console.log(`[RELINK] ${m.slug} (${m.locale})${m.isDraft ? ' [draft]' : ''}: ${m.fromSlug ?? '(none, from sibling)'} -> ${m.targetSlug}`);
   }
   for (const d of plan.communities.createDocs) {
-    console.log(
-      `[COMMUNITY-CREATE] ${d.slug} — ${d.perLocale.map((l) => l.locale).join(' + ')}, order ${d.order}, color ${d.color}, geo ${JSON.stringify(d.coords)}`
-    );
+    console.log(`[COMMUNITY-CREATE] ${d.slug} — ${LOCALES.join(' + ')}, order ${d.order}, color ${d.color}, geo ${JSON.stringify(d.coords)}`);
   }
   for (const s of plan.communities.skippedSlugs) console.log(`[SKIP] community ${s} already exists (usable as link target)`);
+
   const byPair = new Map();
   for (const l of plan.listingCommunity.links) {
     const key = `${l.slug} -> ${l.communitySlug} [${l.source}]`;
@@ -1013,6 +932,7 @@ function printPlan(plan) {
     byPair.get(key).push(l.locale);
   }
   for (const [key, locales] of byPair) console.log(`[LISTING-COMMUNITY] ${key} (${locales.join(', ')})`);
+
   const memberByPair = new Map();
   for (const l of plan.memberCommunity.links) {
     const key = `${l.slug} -> ${l.communitySlug}`;
@@ -1020,36 +940,32 @@ function printPlan(plan) {
     memberByPair.get(key).push(l.locale);
   }
   for (const [key, locales] of memberByPair) console.log(`[MEMBER-COMMUNITY] ${key} (${locales.join(', ')})`);
+
   if (plan.artisan.skipped) console.log(`[SKIP] artisan listing ${ARTISAN_LISTING.slug} already exists`);
   if (plan.artisan.create) {
-    console.log(`[ARTISAN-CREATE] ${ARTISAN_LISTING.slug} (draft, ${plan.artisan.create.rows.map((r) => r.locale).join(' + ')})`);
+    console.log(`[ARTISAN-CREATE] ${ARTISAN_LISTING.slug} (draft, ${LOCALES.join(' + ')})`);
     for (const m of plan.artisan.linkedMembers) console.log(`[ARTISAN-MEMBER] ${m.slug} — ${m.name}`);
   }
   if (plan.goodPractices.skipped) console.log('[SKIP] good-practices-page already has rows');
-  if (plan.goodPractices.create) {
-    console.log(`[GOOD-PRACTICES-CREATE] ${plan.goodPractices.create.perLocale.map((l) => l.locale).join(' + ')} (draft, copied from guide-page)`);
-  }
+  if (plan.goodPractices.create) console.log(`[GOOD-PRACTICES-CREATE] ${LOCALES.join(' + ')} (draft, copied from guide-page)`);
+
   if (plan.hideContact.rows.length > 0) {
     const byDoc = new Map();
     for (const r of plan.hideContact.rows) byDoc.set(r.slug, (byDoc.get(r.slug) || 0) + 1);
     for (const [slug, n] of byDoc) console.log(`[HIDE-CONTACT] ${slug} — ${n} row(s)`);
   }
   for (const w of plan.warnings) console.log(`[WARN] ${w}`);
-  if (plan.listingCategory.rowsWithoutCategory > 0) {
-    console.log(`[NOTE] ${plan.listingCategory.rowsWithoutCategory} listing row(s) have no category link at all — left as-is (existing data state)`);
-  }
 
-  // Summary table (both modes).
-  const catCreated = plan.categories.createDocs.reduce((n, d) => n + d.rows.length, 0);
+  const catCreated = plan.categories.createDocs.length * LOCALES.length;
   const rows = [
     ['categories', catCreated, plan.categories.updateRows.length, plan.categories.skippedRows.length],
     ['listing categories', plan.listingCategory.moves.length, 0, plan.listingCategory.keptRows],
     ['hide_contact (services)', 0, plan.hideContact.rows.length, plan.hideContact.alreadyHidden],
-    ['communities', plan.communities.createDocs.reduce((n, d) => n + d.perLocale.length, 0), 0, plan.communities.skippedSlugs.length],
+    ['communities', plan.communities.createDocs.length * LOCALES.length, 0, plan.communities.skippedSlugs.length],
     ['listings -> community', plan.listingCommunity.links.length, 0, plan.listingCommunity.existingPairs],
     ['members -> community', plan.memberCommunity.links.length, 0, plan.memberCommunity.existingPairs],
-    ['artisan listing', plan.artisan.create ? plan.artisan.create.rows.length : 0, 0, plan.artisan.skipped ? 1 : 0],
-    ['good-practices page', plan.goodPractices.create ? plan.goodPractices.create.perLocale.length : 0, 0, plan.goodPractices.skipped ? 1 : 0],
+    ['artisan listing', plan.artisan.create ? LOCALES.length : 0, 0, plan.artisan.skipped ? 1 : 0],
+    ['good-practices page', plan.goodPractices.create ? LOCALES.length : 0, 0, plan.goodPractices.skipped ? 1 : 0],
   ];
   console.log('\nSummary (rows):');
   console.log('  section                     created  updated  skipped');
@@ -1102,7 +1018,7 @@ function parseMapFile(mapPath, validCommunitySlugs) {
 async function main() {
   const args = process.argv.slice(2);
   const APPLY = args.includes('--apply');
-  const explicitLoc = valueFlag(args, '--db');
+  const explicitDb = valueFlag(args, '--db');
   const mapPath = valueFlag(args, '--map');
   const craftsArg = valueFlag(args, '--crafts');
 
@@ -1110,88 +1026,80 @@ async function main() {
   if (mapPath) {
     if (!fs.existsSync(mapPath)) {
       console.error(`Map file not found: ${mapPath}`);
-      process.exit(2);
+      return 2;
     }
     try {
       mapOverrides = parseMapFile(mapPath, COMMUNITY_CONTRACT.map((c) => c.slug));
     } catch (e) {
       console.error(`Bad --map config: ${e.message}`);
-      process.exit(2);
+      return 2;
     }
   }
   const craftsSlugs = craftsArg ? craftsArg.split(',').map((s) => s.trim()).filter(Boolean) : [];
 
-  const dialect = process.env.DATABASE_CLIENT === 'postgres' || /^postgres(ql)?:\/\//.test(explicitLoc || '')
-    ? 'postgres'
-    : 'sqlite';
-  const loc = dialect === 'postgres'
-    ? explicitLoc || process.env.DATABASE_URL
-    : explicitLoc
-      ? path.resolve(process.cwd(), explicitLoc)
-      : path.resolve(process.cwd(), process.env.DATABASE_FILENAME || '.tmp/data.db');
-
-  if (dialect === 'sqlite' && !fs.existsSync(loc)) {
-    console.error(`Database not found: ${loc}`);
-    process.exit(2);
-  }
-  if (dialect === 'postgres' && !loc) {
-    console.error('PostgreSQL target missing: pass --db <connection-string> or set DATABASE_URL');
-    process.exit(2);
-  }
-
-  console.log(`Dialect:    ${dialect}`);
-  console.log(`Target:     ${dialect === 'postgres' ? '<connection string redacted>' : loc}`);
   console.log(`Mode:       ${APPLY ? 'APPLY (migrate + snapshot written)' : 'DRY-RUN (no writes)'}\n`);
 
-  const db = await openDb(dialect, loc);
-  const plan = await planMigration(db, dialect, { mapOverrides, craftsSlugs });
+  let strapiApp;
+  try {
+    strapiApp = await loadStrapiInstance({ dbPath: explicitDb });
+    const plan = await planMigration(strapiApp, { mapOverrides, craftsSlugs });
+    printPlan(plan);
 
-  printPlan(plan);
+    if (!planHasWork(plan)) {
+      console.log('\nNothing to migrate — database already matches the redesign contract.');
+      return 0;
+    }
 
-  if (!planHasWork(plan)) {
-    console.log('\nNothing to migrate — database already matches the redesign contract.');
-    await closeDb(db, dialect);
-    process.exit(0);
+    if (!APPLY) {
+      console.log('\nDry-run complete. Re-run with --apply to execute.');
+      return 0;
+    }
+
+    const dbFile = process.env.DATABASE_FILENAME;
+    const snapshotDir = process.env.DATABASE_CLIENT === 'postgres' || !dbFile
+      ? process.cwd()
+      : path.dirname(path.resolve(process.cwd(), dbFile));
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const snapshotPath = path.join(snapshotDir, `migrate-redesign-snapshot-${stamp}.json`);
+
+    const totals = await applyMigration(strapiApp, plan, { snapshotPath });
+    console.log(
+      `\nMigration complete: ${totals.categoriesCreated + totals.categoriesUpdated} category row(s), ` +
+        `${totals.listingRowsRelinked} relink(s), ${totals.hideContactRows} hide_contact row(s), ` +
+        `${totals.communitiesCreated} community row(s), ${totals.listingCommunityLinks} listing link(s), ` +
+        `${totals.memberCommunityLinks} member link(s), artisan listing ${totals.artisanRows} row(s), ` +
+        `good-practices ${totals.goodPracticesRows} row(s). Snapshot: ${snapshotPath}`
+    );
+    console.log('Re-run without --apply to confirm there is nothing left to do.');
+    return 0;
+  } finally {
+    await closeStrapiInstance(strapiApp);
   }
-
-  if (!APPLY) {
-    console.log('\nDry-run complete. Re-run with --apply to execute.');
-    await closeDb(db, dialect);
-    process.exit(1);
-  }
-
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const snapshotPath = path.join(
-    dialect === 'sqlite' ? path.dirname(loc) : process.cwd(),
-    `migrate-redesign-snapshot-${stamp}.json`
-  );
-  const totals = await applyMigration(db, dialect, plan, { snapshotPath, target: loc });
-  console.log(
-    `\nMigration complete: ${totals.categoriesCreated + totals.categoriesUpdated} category row(s), ` +
-      `${totals.listingRowsRelinked} relink(s), ${totals.hideContactRows} hide_contact row(s), ` +
-      `${totals.communitiesCreated} community row(s), ${totals.listingCommunityLinks} listing link(s), ` +
-      `${totals.memberCommunityLinks} member link(s), artisan listing ${totals.artisanRows} row(s), ` +
-      `good-practices ${totals.goodPracticesRows} row(s). Snapshot: ${snapshotPath}`
-  );
-  console.log('Re-run without --apply to confirm there is nothing left to do.');
-  await closeDb(db, dialect);
-  process.exit(0);
 }
 
 if (require.main === module) {
-  main().catch((e) => {
-    console.error('migrate-redesign failed:', e.message);
-    process.exit(1);
-  });
+  main()
+    .then((code) => process.exit(code ?? 0))
+    .catch((e) => {
+      console.error('migrate-redesign failed:', e.message);
+      process.exit(1);
+    });
 }
 
 module.exports = {
+  loadStrapiInstance,
+  closeStrapiInstance,
   planMigration,
   planHasWork,
   applyMigration,
   buildSnapshot,
+  buildCommunityData,
+  buildGoodPracticesData,
   parseMapFile,
-  newDocumentId,
+  reindexRows,
+  resolveRow,
+  UID,
+  LOCALES,
   CATEGORY_CONTRACT,
   COMMUNITY_CONTRACT,
   LEGACY_CATEGORY_TARGET,
@@ -1201,4 +1109,5 @@ module.exports = {
   PAV_COORDS,
   RSC_COORDS,
   ARTISAN_LISTING,
+  GOOD_PRACTICES_LABEL,
 };
