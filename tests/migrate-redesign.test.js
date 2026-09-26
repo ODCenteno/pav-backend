@@ -450,6 +450,11 @@ describe('migrate-redesign (Strapi-backed)', () => {
         const pub = await strapi.documents(UID.category).findFirst({ filters: { slug }, locale, status: 'published' });
         expect(draft, `${slug} ${locale} draft`).toBeTruthy();
         expect(pub, `${slug} ${locale} published`).toBeTruthy();
+        if (slug === 'crafts') {
+          // Contract §1: color chosen by RED.
+          expect(draft.color).toBe('#B59BD9');
+          expect(pub.color).toBe('#B59BD9');
+        }
       }
     }
 

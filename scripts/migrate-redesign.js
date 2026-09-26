@@ -118,6 +118,9 @@ const LEGACY_CATEGORY_TARGET = {
 // Fallback when the legacy `restaurants` category carries no color.
 const GASTRONOMY_COLOR_FALLBACK = '#F5A623';
 
+// Contract §1: crafts category color chosen by RED.
+const CRAFTS_COLOR = '#B59BD9';
+
 // Contract §2 coordinates. HARD RULE: these are the contract values. Do NOT
 // reuse RSC_COORDS from scripts/import-csv-listings.js — that value
 // (24.16315, -110.3384) points at La Paz, not at the hamlet.
@@ -318,7 +321,7 @@ async function planMigration(strapi, opts = {}) {
       plan.categories.createDocs.push({
         slug: c.slug,
         order: c.order,
-        color: c.slug === 'gastronomy' ? gastronomyColor : null,
+        color: c.slug === 'gastronomy' ? gastronomyColor : c.slug === 'crafts' ? CRAFTS_COLOR : null,
         name: c.name,
       });
       plan.snapshot.newDocuments.push({ uid: UID.category, slug: c.slug });
@@ -351,7 +354,8 @@ async function planMigration(strapi, opts = {}) {
   }
 
   const craftsRows = catsBySlug.get('crafts') || [];
-  plan.craftsColorNote = craftsRows.length === 0 || craftsRows.every((r) => !r.color);
+  // Only existing crafts rows can lack a color: new ones get CRAFTS_COLOR.
+  plan.craftsColorNote = craftsRows.length > 0 && craftsRows.every((r) => !r.color);
 
   // ---- Listings + current category -------------------------------------
 
