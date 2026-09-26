@@ -49,6 +49,12 @@
  *   6. Good-practices page: created once, as a DRAFT (both locales), from
  *      the current guide-page content (protected area, influence, fishing
  *      refuge, recommendations, tips). Skipped if it already has rows.
+ *   7. Phones: for every listing and community-member contact component,
+ *      fill the new phone/whatsapp country-code + number fields from the
+ *      legacy free-text values (contract §5b normalization), on every
+ *      physical row (draft and published, both locales). Pairs whose new
+ *      fields are already filled are never touched; unparseable legacy
+ *      values are listed as manual review with the new fields left empty.
  *
  * Safety:
  *   - Dry-run by default (prints the plan, writes nothing); exits 0.
@@ -170,6 +176,43 @@ const ARTISAN_ROLE_RE = /artesan|craft/i;
 
 const GOOD_PRACTICES_LABEL = 'Good Practices Page';
 
+// Contract §5b phone validation (also enforced by contact-info schema regexes).
+const PHONE_COUNTRY_CODE_REGEX = /^\+[1-9]\d{0,2}$/;
+const PHONE_NUMBER_REGEX = /^\d{10}$/;
+
+// Query Engine UID of the shared contact-info component. NOTE: in Strapi 5
+// the Query Engine registers components under their API UID, not their
+// table name ('components_contact_contact_infos' throws "Model not found").
+const CONTACT_COMPONENT_UID = 'contact.contact-info';
+
+// The two independent phone pairs of the contact-info component.
+const PHONE_PAIRS = [
+  { kind: 'phone', legacyField: 'phone', countryCodeField: 'phoneCountryCode', numberField: 'phoneNumber' },
+  { kind: 'whatsapp', legacyField: 'whatsapp', countryCodeField: 'whatsappCountryCode', numberField: 'whatsappNumber' },
+];
+
+/**
+ * Normalize a legacy free-text phone/whatsapp value (contract §5b):
+ * strip to digits, then 13 digits starting with '521' or 12 digits starting
+ * with '52' become '+52' + the last 10 digits, 10 digits become '+52' +
+ * those digits. Returns null for anything unparseable (manual review) or
+ * empty (caller treats empty legacy as "nothing to do").
+ */
+function normalizeLegacyPhone(raw) {
+  if (raw == null) return null;
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 13 && digits.startsWith('521')) {
+    return { countryCode: '+52', number: digits.slice(-10) };
+  }
+  if (digits.length === 12 && digits.startsWith('52')) {
+    return { countryCode: '+52', number: digits.slice(-10) };
+  }
+  if (digits.length === 10) {
+    return { countryCode: '+52', number: digits };
+  }
+  return null;
+}
+
 // ---- Strapi runtime -----------------------------------------------------
 
 /**
@@ -250,6 +293,7 @@ async function planMigration(strapi, opts = {}) {
     communities: { createDocs: [], skippedSlugs: [] },
     listingCommunity: { links: [], existingPairs: 0, unresolved: [] },
     memberCommunity: { links: [], existingPairs: 0, noLocality: [] },
+    phones: { updates: [], alreadyFilled: 0, noContact: 0, emptyLegacy: 0, manualReview: [] },
     artisan: { create: null, skipped: false, memberLinks: [], linkedMembers: [] },
     goodPractices: { create: null, skipped: false },
     craftsCandidates: [],
@@ -316,6 +360,7 @@ async function planMigration(strapi, opts = {}) {
     populate: {
       category: { select: ['id', 'slug', 'locale', 'publishedAt'] },
       community: { select: ['id', 'slug'] },
+      contact: true,
     },
     orderBy: { id: 'asc' },
   });
@@ -492,7 +537,7 @@ async function planMigration(strapi, opts = {}) {
 
   const memberRows = await strapi.db.query(UID.member).findMany({
     select: ['id', 'documentId', 'slug', 'name', 'locale', 'locality', 'role', 'publishedAt'],
-    populate: { listings: { select: ['id'] }, community: { select: ['id', 'slug'] } },
+    populate: { listings: { select: ['id'] }, community: { select: ['id', 'slug'] }, contact: true },
     orderBy: { id: 'asc' },
   });
 
@@ -608,6 +653,70 @@ async function planMigration(strapi, opts = {}) {
     });
   }
 
+  // ---- Step 7 · Phones (contact component, contract §5b) ---------------------
+  //
+  // Each physical row (draft/published, per locale) of every listing and
+  // member is considered, for the phone pair and the whatsapp pair
+  // independently. A pair's target counts as "already filled" when the
+  // national NUMBER is set, or when the country code holds anything other
+  // than the '+52' default: the Document Service persists the schema
+  // default ('+52') into both country-code columns on every create, so a
+  // lone '+52' next to an empty number is the default, not human data —
+  // and '+52' is the only country code this step ever writes, so filling
+  // such a pair destroys nothing. Anything else is left untouched
+  // (contract: never overwrite).
+
+  const isNonEmpty = (v) => v != null && String(v).trim() !== '';
+
+  const planPhonesForRow = (uid, row) => {
+    const contact = row.contact;
+    if (!contact) {
+      plan.phones.noContact++;
+      return;
+    }
+    const isDraft = row.publishedAt == null;
+    for (const pair of PHONE_PAIRS) {
+      const countryCode = contact[pair.countryCodeField];
+      const number = contact[pair.numberField];
+      if (isNonEmpty(number) || (isNonEmpty(countryCode) && countryCode !== '+52')) {
+        plan.phones.alreadyFilled++;
+        continue;
+      }
+      const legacy = contact[pair.legacyField];
+      if (!isNonEmpty(legacy)) {
+        plan.phones.emptyLegacy++;
+        continue;
+      }
+      const parsed = normalizeLegacyPhone(legacy);
+      if (!parsed) {
+        plan.phones.manualReview.push({ uid, kind: pair.kind, slug: row.slug, locale: row.locale, isDraft, value: legacy });
+        continue;
+      }
+      plan.phones.updates.push({
+        componentRowId: contact.id,
+        uid,
+        slug: row.slug,
+        locale: row.locale,
+        isDraft,
+        kind: pair.kind,
+        countryCode: parsed.countryCode,
+        number: parsed.number,
+        legacyValue: String(legacy),
+      });
+      plan.snapshot.touches.push({
+        uid,
+        id: row.id,
+        slug: row.slug,
+        locale: row.locale,
+        field: `contact.${pair.kind}`,
+        before: { countryCode: countryCode ?? null, number: number ?? null },
+      });
+    }
+  };
+
+  for (const row of listingRows) planPhonesForRow(UID.listing, row);
+  for (const m of memberRows) planPhonesForRow(UID.member, m);
+
   // ---- Step 5 · Artisans group listing ---------------------------------------
 
   const artisanExists = listingRows.some((r) => r.slug === ARTISAN_LISTING.slug);
@@ -690,7 +799,8 @@ const planHasWork = (plan) =>
   plan.listingCommunity.links.length > 0 ||
   plan.memberCommunity.links.length > 0 ||
   plan.artisan.create !== null ||
-  plan.goodPractices.create !== null;
+  plan.goodPractices.create !== null ||
+  plan.phones.updates.length > 0;
 
 // ---- Snapshot ----------------------------------------------------------------
 
@@ -710,6 +820,7 @@ function buildSnapshot(plan) {
       memberCommunityLinks: plan.memberCommunity.links.length,
       artisanListingCreated: plan.artisan.create ? plan.artisan.create.slug : null,
       goodPracticesPageCreated: plan.goodPractices.create !== null,
+      phonesRows: plan.phones.updates.length,
     },
   };
 }
@@ -769,6 +880,7 @@ async function applyMigration(strapi, plan, opts = {}) {
     memberCommunityLinks: plan.memberCommunity.links.length,
     artisanRows: plan.artisan.create ? LOCALES.length : 0,
     goodPracticesRows: plan.goodPractices.create ? LOCALES.length : 0,
+    phonesRows: plan.phones.updates.length,
     snapshotPath: snapshotPath || null,
   };
 
@@ -901,6 +1013,17 @@ async function applyMigration(strapi, plan, opts = {}) {
         data: buildGoodPracticesData(plan.goodPractices.create.perLocale[SECOND_LOCALE]),
       });
     }
+
+    // 9. Phones: fill the new contact fields from the legacy ones. The
+    //    planner only schedules genuinely empty pairs, so existing values
+    //    are never overwritten. Field names follow the pair's kind.
+    for (const u of plan.phones.updates) {
+      const data =
+        u.kind === 'whatsapp'
+          ? { whatsappCountryCode: u.countryCode, whatsappNumber: u.number }
+          : { phoneCountryCode: u.countryCode, phoneNumber: u.number };
+      await strapi.db.query(CONTACT_COMPONENT_UID).update({ where: { id: u.componentRowId }, data });
+    }
   });
 
   return totals;
@@ -949,6 +1072,10 @@ function printPlan(plan) {
   if (plan.goodPractices.skipped) console.log('[SKIP] good-practices-page already has rows');
   if (plan.goodPractices.create) console.log(`[GOOD-PRACTICES-CREATE] ${LOCALES.join(' + ')} (draft, copied from guide-page)`);
 
+  for (const u of plan.phones.updates) {
+    console.log(`[PHONE-FILL] ${u.slug} (${u.locale}${u.isDraft ? ', draft' : ''}) ${u.kind}: "${u.legacyValue}" -> ${u.countryCode} ${u.number}`);
+  }
+
   if (plan.hideContact.rows.length > 0) {
     const byDoc = new Map();
     for (const r of plan.hideContact.rows) byDoc.set(r.slug, (byDoc.get(r.slug) || 0) + 1);
@@ -966,6 +1093,7 @@ function printPlan(plan) {
     ['members -> community', plan.memberCommunity.links.length, 0, plan.memberCommunity.existingPairs],
     ['artisan listing', plan.artisan.create ? LOCALES.length : 0, 0, plan.artisan.skipped ? 1 : 0],
     ['good-practices page', plan.goodPractices.create ? LOCALES.length : 0, 0, plan.goodPractices.skipped ? 1 : 0],
+    ['phones (contact)', 0, plan.phones.updates.length, plan.phones.alreadyFilled + plan.phones.emptyLegacy + plan.phones.noContact],
   ];
   console.log('\nSummary (rows):');
   console.log('  section                     created  updated  skipped');
@@ -980,6 +1108,9 @@ function printPlan(plan) {
   }
   if (plan.craftsColorNote) review.push('  [crafts-color] crafts category has no color yet — editors pick one');
   for (const m of plan.memberCommunity.noLocality) review.push(`  [member-locality] ${m.slug} — ${m.reason}`);
+  for (const m of plan.phones.manualReview) {
+    review.push(`  [phone-review] ${m.slug} (${m.locale}) ${m.kind}: "${m.value}" — unparseable, new fields left empty`);
+  }
   if (review.length > 0) {
     console.log('\nNeeds manual review:');
     for (const line of review) console.log(line);
@@ -1068,7 +1199,7 @@ async function main() {
         `${totals.listingRowsRelinked} relink(s), ${totals.hideContactRows} hide_contact row(s), ` +
         `${totals.communitiesCreated} community row(s), ${totals.listingCommunityLinks} listing link(s), ` +
         `${totals.memberCommunityLinks} member link(s), artisan listing ${totals.artisanRows} row(s), ` +
-        `good-practices ${totals.goodPracticesRows} row(s). Snapshot: ${snapshotPath}`
+        `good-practices ${totals.goodPracticesRows} row(s), phones ${totals.phonesRows} row(s). Snapshot: ${snapshotPath}`
     );
     console.log('Re-run without --apply to confirm there is nothing left to do.');
     return 0;
@@ -1110,4 +1241,8 @@ module.exports = {
   RSC_COORDS,
   ARTISAN_LISTING,
   GOOD_PRACTICES_LABEL,
+  normalizeLegacyPhone,
+  PHONE_COUNTRY_CODE_REGEX,
+  PHONE_NUMBER_REGEX,
+  CONTACT_COMPONENT_UID,
 };

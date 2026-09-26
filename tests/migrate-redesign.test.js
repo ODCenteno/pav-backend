@@ -20,6 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 const TIMEOUT = 180_000;
@@ -86,6 +87,7 @@ const LISTING_SEEDS = [
     shortEs: 'Comida frente al mar.',
     shortEn: 'Seaside dining.',
     enMissingCategory: true,
+    contact: { phone: '5216131234567', whatsapp: '526131234567' },
   },
   {
     slug: 'museo-la-concha',
@@ -95,6 +97,20 @@ const LISTING_SEEDS = [
     shortEs: 'Museo de conchas.',
     shortEn: 'Shell museum.',
     pendingDraftEdit: true,
+    contact: { phone: '613-123-4567' },
+  },
+  {
+    slug: 'casa-huespedes',
+    titleEs: 'Casa Huéspedes',
+    titleEn: 'Guest House',
+    categorySlug: 'accommodation',
+    shortEs: 'Habitaciones cómodas.',
+    shortEn: 'Comfortable rooms.',
+    // Pre-filled phone pair: the migration must NEVER touch it. Its whatsapp
+    // is absent, and it deliberately has no community source (expected to
+    // appear in unresolved listing manual review — do not "fix" it).
+    contact: { phone: '5216123456789', phoneCountryCode: '+52', phoneNumber: '6123456789' },
+    unresolvedCommunity: true,
   },
   {
     slug: 'servicios-de-panga',
@@ -115,8 +131,20 @@ const LISTING_SEEDS = [
 ];
 
 const MEMBER_SEEDS = [
-  { slug: 'juana-perez', name: 'Juana Pérez', locality: 'agua-verde', role: 'Artesana de Concha' },
-  { slug: 'esther-romero', name: 'Esther Romero', locality: 'rancho-san-cosme', role: 'Artesana y Curadora de Museo' },
+  {
+    slug: 'juana-perez',
+    name: 'Juana Pérez',
+    locality: 'agua-verde',
+    role: 'Artesana de Concha',
+    contact: { whatsapp: '+52 613 123 4567' },
+  },
+  {
+    slug: 'esther-romero',
+    name: 'Esther Romero',
+    locality: 'rancho-san-cosme',
+    role: 'Artesana y Curadora de Museo',
+    contact: { phone: '12345' }, // unparseable -> manual review
+  },
   { slug: 'don-alejo-romero', name: 'Don Alejo Romero', locality: 'rancho-san-cosme', role: 'Guía de Panga', listingSlug: 'servicios-de-panga' },
 ];
 
@@ -144,6 +172,7 @@ async function seedDatabase() {
         hideContact: false,
         isFeatured: false,
         order: 0,
+        contact: l.contact,
       },
       {
         title: l.titleEn,
@@ -154,6 +183,7 @@ async function seedDatabase() {
         hideContact: false,
         isFeatured: false,
         order: 0,
+        contact: l.contact,
       },
       { publish: true }
     );
@@ -178,8 +208,8 @@ async function seedDatabase() {
   await strapi.db.query(UID.listing).update({ where: { id: andreaDraft.id }, data: { category: servicesPublished.id } });
 
   for (const m of MEMBER_SEEDS) {
-    const data = { name: m.name, slug: m.slug, role: m.role, locality: m.locality };
-    const dataEn = { slug: m.slug, role: m.role, locality: m.locality };
+    const data = { name: m.name, slug: m.slug, role: m.role, locality: m.locality, contact: m.contact };
+    const dataEn = { slug: m.slug, role: m.role, locality: m.locality, contact: m.contact };
     if (m.listingSlug) {
       const target = migrate.resolveRow(listingIdx, m.listingSlug, ES, true);
       data.listings = target ? [target.id] : [];
@@ -239,6 +269,61 @@ async function seedDatabase() {
   await createBothLocales(UID.guidePage, guideEs, guideEn, { publish: true });
 }
 
+describe('contact-info schema (contract §5b)', () => {
+  const schemaPath = fileURLToPath(new URL('../src/components/contact/contact-info.json', import.meta.url));
+  const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+
+  it('has the exact 11-attribute key set', () => {
+    expect(Object.keys(schema.attributes).sort()).toEqual([
+      'email',
+      'facebook',
+      'instagram',
+      'phone',
+      'phoneCountryCode',
+      'phoneNumber',
+      'tiktok',
+      'website',
+      'whatsapp',
+      'whatsappCountryCode',
+      'whatsappNumber',
+    ]);
+  });
+
+  it('defines the country-code fields with the §5b regex and +52 default', () => {
+    for (const key of ['phoneCountryCode', 'whatsappCountryCode']) {
+      expect(schema.attributes[key].type, key).toBe('string');
+      expect(schema.attributes[key].regex, key).toBe('^\\+[1-9]\\d{0,2}$');
+      expect(schema.attributes[key].default, key).toBe('+52');
+    }
+  });
+
+  it('defines the national number fields with the 10-digit regex and no default', () => {
+    for (const key of ['phoneNumber', 'whatsappNumber']) {
+      expect(schema.attributes[key].type, key).toBe('string');
+      expect(schema.attributes[key].regex, key).toBe('^\\d{10}$');
+      expect(schema.attributes[key], key).not.toHaveProperty('default');
+    }
+  });
+
+  it('marks the legacy phone and whatsapp descriptions as deprecated', () => {
+    expect(schema.attributes.phone.description).toContain('Obsoleto');
+    expect(schema.attributes.whatsapp.description).toContain('Obsoleto');
+  });
+});
+
+describe('normalizeLegacyPhone (contract §5b)', () => {
+  it.each(['5216131234567', '526131234567', '+52 613 123 4567', '613-123-4567'])(
+    'normalizes %j to +52 6131234567',
+    (raw) => {
+      expect(migrate.normalizeLegacyPhone(raw)).toEqual({ countryCode: '+52', number: '6131234567' });
+    }
+  );
+
+  it.each(['12345', '', null, undefined])('sends %j to manual review (null)', (raw) => {
+    expect(migrate.normalizeLegacyPhone(raw)).toBeNull();
+  });
+});
+
 describe('migrate-redesign (Strapi-backed)', () => {
   beforeAll(async () => {
     dbPath = tmpPath('migrate-redesign-test', 'db');
@@ -255,6 +340,60 @@ describe('migrate-redesign (Strapi-backed)', () => {
     }
   }, TIMEOUT);
 
+  describe('contact field validation (contract §5b)', () => {
+    const VALIDATION_SLUG = 'validacion-telefono';
+
+    async function createWithContact(contact) {
+      // Published, not draft: Strapi only enforces attribute regexes on
+      // non-draft validation, so the regex must be exercised via a
+      // published create.
+      return strapi.documents(UID.listing).create({
+        data: {
+          title: 'Validación Teléfono',
+          slug: VALIDATION_SLUG,
+          hideContact: false,
+          isFeatured: false,
+          order: 0,
+          contact,
+        },
+        locale: ES,
+        status: 'published',
+      });
+    }
+
+    it('rejects a phoneNumber containing spaces', async () => {
+      await expect(createWithContact({ phoneCountryCode: '+52', phoneNumber: '613 123 4567' })).rejects.toThrow(
+        /phoneNumber/
+      );
+    }, TIMEOUT);
+
+    it('rejects a 9-digit phoneNumber', async () => {
+      await expect(createWithContact({ phoneCountryCode: '+52', phoneNumber: '61312345' })).rejects.toThrow(
+        /phoneNumber/
+      );
+    }, TIMEOUT);
+
+    it('accepts a valid phone pair (positive control) and cleans the row up', async () => {
+      try {
+        await createWithContact({ phoneCountryCode: '+52', phoneNumber: '6131234567' });
+        const row = await strapi.documents(UID.listing).findFirst({
+          filters: { slug: VALIDATION_SLUG },
+          locale: ES,
+          status: 'published',
+          populate: ['contact'],
+        });
+        expect(row?.contact?.phoneCountryCode).toBe('+52');
+        expect(row?.contact?.phoneNumber).toBe('6131234567');
+      } finally {
+        // Cleanup every physical row of this throwaway document so the plan
+        // tests below are unaffected (both locales, draft and published).
+        await strapi.db.query(UID.listing).deleteMany({ where: { slug: VALIDATION_SLUG } });
+        const remaining = await strapi.db.query(UID.listing).findMany({ where: { slug: VALIDATION_SLUG }, select: ['id'] });
+        expect(remaining).toHaveLength(0);
+      }
+    }, TIMEOUT);
+  });
+
   it('dry-run plans the expected work and writes nothing', async () => {
     const before = await strapi.db.query(UID.community).findMany({});
     expect(before).toHaveLength(0);
@@ -266,6 +405,27 @@ describe('migrate-redesign (Strapi-backed)', () => {
     expect(plan.artisan.create).toBeTruthy();
     expect(plan.goodPractices.create).toBeTruthy();
     expect(plan.craftsCandidates.map((c) => c.slug)).toContain('artesanias-andrea');
+
+    // Phones (contract §5b): fillable pairs planned for both locales,
+    // pre-filled pairs never planned, unparseable values flagged.
+    expect(plan.phones.updates.length).toBeGreaterThan(0);
+    for (const locale of LOCALES) {
+      expect(
+        plan.phones.updates.some(
+          (u) =>
+            u.slug === 'restaurante-brisa-del-mar' &&
+            u.kind === 'phone' &&
+            u.locale === locale &&
+            u.countryCode === '+52' &&
+            u.number === '6131234567'
+        ),
+        `brisa phone pair planned for ${locale}`
+      ).toBe(true);
+    }
+    expect(
+      plan.phones.manualReview.some((m) => m.slug === 'esther-romero' && m.kind === 'phone' && m.value === '12345')
+    ).toBe(true);
+    expect(plan.phones.updates.every((u) => u.slug !== 'casa-huespedes')).toBe(true);
 
     const after = await strapi.db.query(UID.community).findMany({});
     expect(after).toHaveLength(0);
@@ -322,6 +482,8 @@ describe('migrate-redesign (Strapi-backed)', () => {
     expect(rsc.location.geoPoint.lng).toBeCloseTo(-111.1694027, 5);
 
     // 3. Listings resolve category and community, draft + published, both locales.
+    //    casa-huespedes has no community source on purpose (expected to stay
+    //    unresolved), so its community assertion is skipped.
     for (const l of LISTING_SEEDS) {
       for (const locale of LOCALES) {
         for (const status of ['draft', 'published']) {
@@ -333,7 +495,9 @@ describe('migrate-redesign (Strapi-backed)', () => {
           });
           expect(row, `${l.slug} ${locale} ${status}`).toBeTruthy();
           expect(row.category, `${l.slug} ${locale} ${status} category`).toBeTruthy();
-          expect(row.community, `${l.slug} ${locale} ${status} community`).toBeTruthy();
+          if (!l.unresolvedCommunity) {
+            expect(row.community, `${l.slug} ${locale} ${status} community`).toBeTruthy();
+          }
         }
       }
     }
@@ -400,6 +564,64 @@ describe('migrate-redesign (Strapi-backed)', () => {
     const museoDraft = await strapi.documents(UID.listing).findFirst({ filters: { slug: 'museo-la-concha' }, locale: ES, status: 'draft' });
     expect(museoPub.shortDescription).not.toContain('PENDING EDIT');
     expect(museoDraft.shortDescription).toContain('PENDING EDIT');
+
+    // 9. Phones: new contact fields filled from legacy values on EVERY
+    //    physical row (draft + published, both locales); pre-filled pairs
+    //    never touched.
+    const brisaPhonePub = await strapi.documents(UID.listing).findFirst({
+      filters: { slug: 'restaurante-brisa-del-mar' },
+      locale: ES,
+      status: 'published',
+      populate: ['contact'],
+    });
+    expect(brisaPhonePub.contact.phoneCountryCode).toBe('+52');
+    expect(brisaPhonePub.contact.phoneNumber).toBe('6131234567');
+    expect(brisaPhonePub.contact.whatsappCountryCode).toBe('+52');
+    expect(brisaPhonePub.contact.whatsappNumber).toBe('6131234567');
+
+    const brisaPhoneDraft = await strapi.documents(UID.listing).findFirst({
+      filters: { slug: 'restaurante-brisa-del-mar' },
+      locale: ES,
+      status: 'draft',
+      populate: ['contact'],
+    });
+    expect(brisaPhoneDraft.contact.phoneNumber).toBe('6131234567');
+    expect(brisaPhoneDraft.contact.whatsappNumber).toBe('6131234567');
+
+    const brisaPhoneEn = await strapi.documents(UID.listing).findFirst({
+      filters: { slug: 'restaurante-brisa-del-mar' },
+      locale: EN,
+      status: 'published',
+      populate: ['contact'],
+    });
+    expect(brisaPhoneEn.contact.phoneNumber).toBe('6131234567');
+
+    const museoPhone = await strapi.documents(UID.listing).findFirst({
+      filters: { slug: 'museo-la-concha' },
+      locale: ES,
+      status: 'published',
+      populate: ['contact'],
+    });
+    expect(museoPhone.contact.phoneNumber).toBe('6131234567');
+
+    const juanaWhatsapp = await strapi.documents(UID.member).findFirst({
+      filters: { slug: 'juana-perez' },
+      locale: ES,
+      status: 'published',
+      populate: ['contact'],
+    });
+    expect(juanaWhatsapp.contact.whatsappCountryCode).toBe('+52');
+    expect(juanaWhatsapp.contact.whatsappNumber).toBe('6131234567');
+
+    // casa-huespedes came with a pre-filled phone pair: NEVER overwritten.
+    const casaPhone = await strapi.documents(UID.listing).findFirst({
+      filters: { slug: 'casa-huespedes' },
+      locale: ES,
+      status: 'published',
+      populate: ['contact'],
+    });
+    expect(casaPhone.contact.phoneCountryCode).toBe('+52');
+    expect(casaPhone.contact.phoneNumber).toBe('6123456789');
   }, TIMEOUT);
 
   it('a second run is a no-op', async () => {
@@ -412,6 +634,10 @@ describe('migrate-redesign (Strapi-backed)', () => {
     expect(plan.memberCommunity.links).toHaveLength(0);
     expect(plan.artisan.skipped).toBe(true);
     expect(plan.goodPractices.skipped).toBe(true);
+    // Phones: nothing left to fill; manual review is informational only, so
+    // esther's unparseable legacy phone is still listed (and not blocking).
+    expect(plan.phones.updates).toHaveLength(0);
+    expect(plan.phones.manualReview.some((m) => m.slug === 'esther-romero')).toBe(true);
   }, TIMEOUT);
 
   it('--map and --crafts overrides still work, applied writes and the plan converges', async () => {
