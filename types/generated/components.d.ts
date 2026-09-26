@@ -192,9 +192,15 @@ export interface ContactContactInfo extends Struct.ComponentSchema {
     facebook: Schema.Attribute.String;
     instagram: Schema.Attribute.String;
     phone: Schema.Attribute.String;
+    phoneCountryCode: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'+52'>;
+    phoneNumber: Schema.Attribute.String;
     tiktok: Schema.Attribute.String;
     website: Schema.Attribute.String;
     whatsapp: Schema.Attribute.String;
+    whatsappCountryCode: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'+52'>;
+    whatsappNumber: Schema.Attribute.String;
   };
 }
 

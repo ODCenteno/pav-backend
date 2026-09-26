@@ -11,11 +11,33 @@
   "attributes": {
     "whatsapp": {
       "type": "string",
-      "description": "Número de WhatsApp con código de país. Ej: +521234567890"
+      "description": "Obsoleto: usar los campos de código y número (whatsappCountryCode + whatsappNumber). Número de WhatsApp con formato libre. Ej: +521234567890"
     },
     "phone": {
       "type": "string",
-      "description": "Número de teléfono fijo. Ej: +521234567890"
+      "description": "Obsoleto: usar los campos de código y número (phoneCountryCode + phoneNumber). Número de teléfono con formato libre. Ej: +521234567890"
+    },
+    "phoneCountryCode": {
+      "type": "string",
+      "regex": "^\\+[1-9]\\d{0,2}$",
+      "default": "+52",
+      "description": "Código de país del teléfono, por defecto +52. Ejemplo: +52"
+    },
+    "phoneNumber": {
+      "type": "string",
+      "regex": "^\\d{10}$",
+      "description": "Número de teléfono nacional: 10 dígitos, sin espacios ni guiones. Ejemplo: 6131234567"
+    },
+    "whatsappCountryCode": {
+      "type": "string",
+      "regex": "^\\+[1-9]\\d{0,2}$",
+      "default": "+52",
+      "description": "Código de país de WhatsApp, por defecto +52. Ejemplo: +52"
+    },
+    "whatsappNumber": {
+      "type": "string",
+      "regex": "^\\d{10}$",
+      "description": "Número de WhatsApp nacional: 10 dígitos, sin espacios ni guiones. Ejemplo: 6131234567"
     },
     "email": {
       "type": "string",
