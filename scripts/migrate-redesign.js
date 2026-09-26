@@ -1362,9 +1362,14 @@ function parseMapFile(mapPath, validCommunitySlugs) {
 async function main() {
   let committed = false;
   // A pooled connection can also reject asynchronously while shutting down.
+  let shutdownWarnings = 0;
   process.on('unhandledRejection', (e) => {
     if (!committed) throw e;
-    console.warn(`[migrate-redesign] shutdown warning (data already committed): ${e && e.message}`);
+    // Pooled connections dropping on shutdown reject once per connection;
+    // report it a single time so a successful run does not look alarming.
+    if (shutdownWarnings++ === 0) {
+      console.warn(`[migrate-redesign] shutdown warning (data already committed): ${e && e.message}`);
+    }
   });
   const args = process.argv.slice(2);
   const APPLY = args.includes('--apply');
