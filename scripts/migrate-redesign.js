@@ -359,7 +359,20 @@ async function planMigration(strapi, opts = {}) {
 
   // ---- Listings + current category -------------------------------------
 
+  // Rows without a locale are corrupt (the Document Service cannot reach them
+  // and there is no same-locale target to link): report them, never plan them.
+  for (const uid of [UID.listing, UID.member]) {
+    const orphans = await strapi.db.query(uid).findMany({
+      select: ['id', 'slug'],
+      where: { locale: { $null: true } },
+    });
+    for (const r of orphans) {
+      plan.warnings.push(`${uid.split('.').pop()} row #${r.id} (${r.slug}) has no locale: corrupt row without a locale, skipped; remove it manually`);
+    }
+  }
+
   const listingRows = await strapi.db.query(UID.listing).findMany({
+    where: { locale: { $notNull: true } },
     select: ['id', 'documentId', 'slug', 'locale', 'publishedAt', 'hideContact'],
     populate: {
       category: { select: ['id', 'slug', 'locale', 'publishedAt'] },
@@ -540,6 +553,7 @@ async function planMigration(strapi, opts = {}) {
   // ---- Step 3 · Listings -> community ---------------------------------------
 
   const memberRows = await strapi.db.query(UID.member).findMany({
+    where: { locale: { $notNull: true } },
     select: ['id', 'documentId', 'slug', 'name', 'locale', 'locality', 'role', 'publishedAt'],
     populate: { listings: { select: ['id'] }, community: { select: ['id', 'slug'] }, contact: true },
     orderBy: { id: 'asc' },
@@ -1151,6 +1165,12 @@ function parseMapFile(mapPath, validCommunitySlugs) {
 }
 
 async function main() {
+  let committed = false;
+  // A pooled connection can also reject asynchronously while shutting down.
+  process.on('unhandledRejection', (e) => {
+    if (!committed) throw e;
+    console.warn(`[migrate-redesign] shutdown warning (data already committed): ${e && e.message}`);
+  });
   const args = process.argv.slice(2);
   const APPLY = args.includes('--apply');
   const explicitDb = valueFlag(args, '--db');
@@ -1198,6 +1218,7 @@ async function main() {
     const snapshotPath = path.join(snapshotDir, `migrate-redesign-snapshot-${stamp}.json`);
 
     const totals = await applyMigration(strapiApp, plan, { snapshotPath });
+    committed = true;
     console.log(
       `\nMigration complete: ${totals.categoriesCreated + totals.categoriesUpdated} category row(s), ` +
         `${totals.listingRowsRelinked} relink(s), ${totals.hideContactRows} hide_contact row(s), ` +
@@ -1208,7 +1229,14 @@ async function main() {
     console.log('Re-run without --apply to confirm there is nothing left to do.');
     return 0;
   } finally {
-    await closeStrapiInstance(strapiApp);
+    try {
+      await closeStrapiInstance(strapiApp);
+    } catch (e) {
+      // After a committed transaction a dropped pooled connection (seen on Neon
+      // after long runs) must not turn a successful migration into exit 1.
+      if (!committed) throw e;
+      console.warn(`[migrate-redesign] shutdown warning (data already committed): ${e.message}`);
+    }
   }
 }
 

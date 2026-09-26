@@ -207,6 +207,13 @@ async function seedDatabase() {
   const servicesPublished = migrate.resolveRow(catIdx, 'services', ES, false);
   await strapi.db.query(UID.listing).update({ where: { id: andreaDraft.id }, data: { category: servicesPublished.id } });
 
+  // Mirrors production: a corrupt listing row with no locale (unreachable for
+  // the Document Service). The migration must skip it and report it.
+  const andreaDoc = LISTING_SEEDS.find((l) => l.slug === 'artesanias-andrea').documentId;
+  await strapi.db.query(UID.listing).create({
+    data: { documentId: andreaDoc, title: 'Artesanías Andrea', slug: 'artesanias-andrea', locale: null },
+  });
+
   for (const m of MEMBER_SEEDS) {
     const data = { name: m.name, slug: m.slug, role: m.role, locality: m.locality, contact: m.contact };
     const dataEn = { slug: m.slug, role: m.role, locality: m.locality, contact: m.contact };
@@ -632,6 +639,8 @@ describe('migrate-redesign (Strapi-backed)', () => {
   it('a second run is a no-op', async () => {
     const plan = await migrate.planMigration(strapi, {});
     expect(migrate.planHasWork(plan)).toBe(false);
+    // The corrupt locale-less row is reported, never planned.
+    expect(plan.warnings.some((w) => /without a locale/.test(w) && /artesanias-andrea/.test(w))).toBe(true);
     expect(plan.categories.createDocs).toHaveLength(0);
     expect(plan.categories.updateRows).toHaveLength(0);
     expect(plan.communities.createDocs).toHaveLength(0);
