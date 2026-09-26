@@ -34,7 +34,19 @@
  *      as manual-review crafts candidates.
  *   2. Communities: create `puerto-agua-verde` and `rancho-san-cosme`
  *      (contract colors/order/coordinates), with history content (header,
- *      milestones, text) duplicated from the guide-page of the SAME locale.
+ *      milestones, text) duplicated from the guide-page of the SAME locale
+ *      and highlights/quick-facts content (section headers + cards, images
+ *      kept) duplicated from the homepage of the SAME locale. Communities
+ *      that already exist are no longer skipped outright: each of the 4
+ *      homepage-content fields is FILLED from the homepage only where
+ *      empty, per document and locale with the draft/published variants
+ *      considered as a pair — editor content is never overwritten. Because
+ *      Strapi 5's Document Service `update` with `status: 'published'`
+ *      writes the draft row first and then republishes (the published row
+ *      is recreated from the draft), a field that is empty on the
+ *      published variant but holds editor content on the draft cannot be
+ *      filled without destroying that content: those fields are reported
+ *      as manual review and left untouched.
  *   3. Listings -> community: resolved per listing document from (1) a
  *      `--map` CSV override, (2) the embedded LISTING_COMMUNITY table, (3) a
  *      linked member's `locality`. Unresolved listings are reported as
@@ -86,6 +98,7 @@ const UID = {
   member: 'api::community-member.community-member',
   goodPractices: 'api::good-practices-page.good-practices-page',
   guidePage: 'api::guide-page.guide-page',
+  homepage: 'api::homepage.homepage',
 };
 
 // Contract §1. Order matters; labels are per locale.
@@ -151,6 +164,11 @@ const LOCALITY_TO_COMMUNITY = {
   'agua-verde': 'puerto-agua-verde',
   'rancho-san-cosme': 'rancho-san-cosme',
 };
+
+// Homepage-content fields copied onto communities (Step 2). The two
+// *Header fields are single section-header components; the other two are
+// repeatable cards.
+const COMMUNITY_CONTENT_FIELDS = ['highlightsHeader', 'highlights', 'quickFactsHeader', 'quickFacts'];
 
 // Embedded listing -> community assignment, distilled from the import data
 // in scripts/import-csv-listings.js. Overridden by --map.
@@ -283,6 +301,36 @@ function resolveRow(idx, slug, locale, preferDraft) {
   return (preferDraft ? list.find((r) => r.draft) : list.find((r) => !r.draft)) || list[0];
 }
 
+/**
+ * Homepage highlights/quick-facts content, mapped for Document Service
+ * writes: section headers as { title, subtitle }, highlight cards with the
+ * image kept as the upload-file id, quick facts as { title, value,
+ * description }. Returns null headers / empty arrays when the homepage (or
+ * the field) has nothing, so callers can treat "no source" uniformly.
+ */
+function homepageContent(homepage) {
+  if (!homepage) return { highlightsHeader: null, highlights: [], quickFactsHeader: null, quickFacts: [] };
+  return {
+    highlightsHeader: homepage.highlightsHeader
+      ? { title: homepage.highlightsHeader.title, subtitle: homepage.highlightsHeader.subtitle ?? null }
+      : null,
+    highlights: (homepage.highlights ?? []).map((x) => ({
+      title: x.title,
+      description: x.description ?? null,
+      image: x.image?.id ?? null,
+      link: x.link ?? null,
+    })),
+    quickFactsHeader: homepage.quickFactsHeader
+      ? { title: homepage.quickFactsHeader.title, subtitle: homepage.quickFactsHeader.subtitle ?? null }
+      : null,
+    quickFacts: (homepage.quickFacts ?? []).map((x) => ({
+      title: x.title,
+      value: x.value,
+      description: x.description ?? null,
+    })),
+  };
+}
+
 // ---- Planner ----------------------------------------------------------------
 
 async function planMigration(strapi, opts = {}) {
@@ -294,6 +342,7 @@ async function planMigration(strapi, opts = {}) {
     listingCategory: { moves: [], keptRows: 0 },
     hideContact: { rows: [], alreadyHidden: 0 },
     communities: { createDocs: [], skippedSlugs: [] },
+    communityContent: { fills: [], alreadyFilled: 0, noSource: 0, manualReview: [] },
     listingCommunity: { links: [], existingPairs: 0, unresolved: [] },
     memberCommunity: { links: [], existingPairs: 0, noLocality: [] },
     phones: { updates: [], alreadyFilled: 0, noContact: 0, emptyLegacy: 0, manualReview: [] },
@@ -519,9 +568,119 @@ async function planMigration(strapi, opts = {}) {
     guideByLocale.set(locale, rows.find((r) => r.publishedAt != null) || rows[0] || null);
   }
 
+  // Homepage per locale (the Step 2 content source for communities), same
+  // pattern as the guide-page: prefer the published row, fall back to the
+  // draft, else null. Highlight images are populated so their file ids can
+  // be re-linked on the community copies ("images kept").
+  const homepageByLocale = new Map();
+  for (const locale of LOCALES) {
+    const rows = await strapi.db.query(UID.homepage).findMany({
+      where: { locale },
+      populate: {
+        highlightsHeader: true,
+        highlights: { populate: { image: true } },
+        quickFactsHeader: true,
+        quickFacts: true,
+      },
+    });
+    homepageByLocale.set(locale, rows.find((r) => r.publishedAt != null) || rows[0] || null);
+  }
+
   for (const c of COMMUNITY_CONTRACT) {
     if ((commBySlug.get(c.slug) || []).length > 0) {
       plan.communities.skippedSlugs.push(c.slug);
+
+      // Existing community: fill homepage content ONLY where empty, per
+      // document and locale, with the draft/published variants considered
+      // as a pair (component values live on each physical row, so the
+      // variants are re-read with their components populated). A
+      // status 'published' update in Strapi 5 writes the draft first and
+      // republishes, so:
+      //   - both variants empty            -> one fill, status 'published'
+      //   - draft empty, published filled  -> fill, status 'draft' only
+      //   - published empty, draft filled  -> manual review, never written
+      const variantsByDoc = groupBy(
+        await strapi.db.query(UID.community).findMany({
+          where: { slug: c.slug },
+          populate: { highlightsHeader: true, highlights: true, quickFactsHeader: true, quickFacts: true },
+        }),
+        (r) => r.documentId
+      );
+      for (const [documentId, docRows] of variantsByDoc) {
+        const docLocales = [...new Set(docRows.map((r) => r.locale).filter(Boolean))];
+        for (const locale of docLocales) {
+          const source = homepageContent(homepageByLocale.get(locale));
+          const draftRow = docRows.find((r) => r.locale === locale && r.publishedAt == null) ?? null;
+          const pubRow = docRows.find((r) => r.locale === locale && r.publishedAt != null) ?? null;
+          for (const field of COMMUNITY_CONTENT_FIELDS) {
+            const fieldIsEmpty = (row) => {
+              if (!row) return false; // absent variant: nothing to fill there
+              const v = row[field];
+              if (v == null) return true;
+              return Array.isArray(v) && v.length === 0;
+            };
+            const src = source[field];
+            const srcHasContent = Array.isArray(src) ? src.length > 0 : src != null;
+            const draftEmpty = fieldIsEmpty(draftRow);
+            const pubEmpty = fieldIsEmpty(pubRow);
+            if (!draftEmpty && !pubEmpty) {
+              plan.communityContent.alreadyFilled++;
+              continue;
+            }
+            if (!srcHasContent) {
+              plan.communityContent.noSource++;
+              continue;
+            }
+            const blocked = (reason) => {
+              plan.communityContent.manualReview.push({ documentId, slug: c.slug, locale, field, reason });
+            };
+            if (draftRow && pubRow && draftEmpty && pubEmpty) {
+              plan.communityContent.fills.push({
+                documentId,
+                slug: c.slug,
+                locale,
+                status: 'published',
+                field,
+                data: src,
+              });
+              for (const row of [draftRow, pubRow]) {
+                plan.snapshot.touches.push({
+                  uid: UID.community,
+                  id: row.id,
+                  slug: c.slug,
+                  locale,
+                  field: `content.${field}`,
+                  before: '<empty>',
+                });
+              }
+            } else if (draftRow && draftEmpty && (!pubRow || !pubEmpty)) {
+              // Draft empty while the published variant keeps editor
+              // content (or does not exist): write the draft only, never
+              // publish, so the published row is left as the editor set it.
+              plan.communityContent.fills.push({
+                documentId,
+                slug: c.slug,
+                locale,
+                status: 'draft',
+                field,
+                data: src,
+              });
+              plan.snapshot.touches.push({
+                uid: UID.community,
+                id: draftRow.id,
+                slug: c.slug,
+                locale,
+                field: `content.${field}`,
+                before: '<empty>',
+              });
+            } else if (!draftRow) {
+              blocked('no draft variant row; the Document Service updates drafts, refusing to write');
+            } else {
+              blocked('draft variant has editor content; filling the published variant would overwrite it');
+            }
+          }
+        }
+      }
       continue;
     }
     const perLocale = {};
@@ -535,6 +694,9 @@ async function planMigration(strapi, opts = {}) {
         historyMilestones: guide
           ? guide.historyMilestones.map((m) => ({ year: m.year, text: m.text }))
           : [],
+        // Homepage highlights/quick-facts copy (null/[] when the homepage
+        // lacks them; buildCommunityData omits empty keys).
+        ...homepageContent(homepageByLocale.get(locale)),
       };
     }
     plan.communities.createDocs.push({
@@ -814,6 +976,7 @@ const planHasWork = (plan) =>
   plan.listingCategory.moves.length > 0 ||
   plan.hideContact.rows.length > 0 ||
   plan.communities.createDocs.length > 0 ||
+  plan.communityContent.fills.length > 0 ||
   plan.listingCommunity.links.length > 0 ||
   plan.memberCommunity.links.length > 0 ||
   plan.artisan.create !== null ||
@@ -834,6 +997,7 @@ function buildSnapshot(plan) {
       listingCategoryMoves: plan.listingCategory.moves.length,
       hideContactRows: plan.hideContact.rows.length,
       communitiesCreated: plan.communities.createDocs.map((d) => d.slug),
+      communityContentFills: plan.communityContent.fills.length,
       listingCommunityLinks: plan.listingCommunity.links.length,
       memberCommunityLinks: plan.memberCommunity.links.length,
       artisanListingCreated: plan.artisan.create ? plan.artisan.create.slug : null,
@@ -858,6 +1022,13 @@ function buildCommunityData(doc, locale) {
     historyMilestones: loc.historyMilestones,
   };
   if (loc.historyHeader) data.historyHeader = loc.historyHeader;
+  // Homepage content: only include keys that carry content (mirroring
+  // historyHeader), so an empty homepage never forces the Document Service
+  // to clear or create empty component rows.
+  if (loc.highlightsHeader) data.highlightsHeader = loc.highlightsHeader;
+  if (loc.highlights && loc.highlights.length > 0) data.highlights = loc.highlights;
+  if (loc.quickFactsHeader) data.quickFactsHeader = loc.quickFactsHeader;
+  if (loc.quickFacts && loc.quickFacts.length > 0) data.quickFacts = loc.quickFacts;
   return data;
 }
 
@@ -894,6 +1065,7 @@ async function applyMigration(strapi, plan, opts = {}) {
     listingRowsRelinked: plan.listingCategory.moves.length,
     hideContactRows: plan.hideContact.rows.length,
     communitiesCreated: plan.communities.createDocs.length * LOCALES.length,
+    communityContentFills: plan.communityContent.fills.length,
     listingCommunityLinks: plan.listingCommunity.links.length,
     memberCommunityLinks: plan.memberCommunity.links.length,
     artisanRows: plan.artisan.create ? LOCALES.length : 0,
@@ -950,6 +1122,22 @@ async function applyMigration(strapi, plan, opts = {}) {
         locale: SECOND_LOCALE,
         data: buildCommunityData(doc, SECOND_LOCALE),
         status: 'published',
+      });
+    }
+
+    // 4b. Existing communities: fill homepage content where empty. A
+    //     status 'published' fill updates the draft then republishes, so
+    //     the content lands on BOTH variants (the planner only schedules
+    //     it when both variants of the field are empty); a status 'draft'
+    //     fill writes the draft row only and never publishes. Fields whose
+    //     draft holds editor content are never planned here (manual
+    //     review), so editor content is never overwritten.
+    for (const f of plan.communityContent.fills) {
+      await strapi.documents(UID.community).update({
+        documentId: f.documentId,
+        locale: f.locale,
+        status: f.status,
+        data: { [f.field]: f.data },
       });
     }
 
@@ -1065,6 +1253,9 @@ function printPlan(plan) {
     console.log(`[COMMUNITY-CREATE] ${d.slug} — ${LOCALES.join(' + ')}, order ${d.order}, color ${d.color}, geo ${JSON.stringify(d.coords)}`);
   }
   for (const s of plan.communities.skippedSlugs) console.log(`[SKIP] community ${s} already exists (usable as link target)`);
+  for (const f of plan.communityContent.fills) {
+    console.log(`[COMMUNITY-FILL] ${f.slug} (${f.locale}, ${f.status}) ${f.field} from homepage`);
+  }
 
   const byPair = new Map();
   for (const l of plan.listingCommunity.links) {
@@ -1107,6 +1298,7 @@ function printPlan(plan) {
     ['listing categories', plan.listingCategory.moves.length, 0, plan.listingCategory.keptRows],
     ['hide_contact (services)', 0, plan.hideContact.rows.length, plan.hideContact.alreadyHidden],
     ['communities', plan.communities.createDocs.length * LOCALES.length, 0, plan.communities.skippedSlugs.length],
+    ['community content', 0, plan.communityContent.fills.length, plan.communityContent.alreadyFilled + plan.communityContent.noSource],
     ['listings -> community', plan.listingCommunity.links.length, 0, plan.listingCommunity.existingPairs],
     ['members -> community', plan.memberCommunity.links.length, 0, plan.memberCommunity.existingPairs],
     ['artisan listing', plan.artisan.create ? LOCALES.length : 0, 0, plan.artisan.skipped ? 1 : 0],
@@ -1126,6 +1318,9 @@ function printPlan(plan) {
   }
   if (plan.craftsColorNote) review.push('  [crafts-color] crafts category has no color yet — editors pick one');
   for (const m of plan.memberCommunity.noLocality) review.push(`  [member-locality] ${m.slug} — ${m.reason}`);
+  for (const m of plan.communityContent.manualReview) {
+    review.push(`  [community-content] ${m.slug} (${m.locale}) ${m.field} — ${m.reason}; fill manually`);
+  }
   for (const m of plan.phones.manualReview) {
     review.push(`  [phone-review] ${m.slug} (${m.locale}) ${m.kind}: "${m.value}" — unparseable, new fields left empty`);
   }
@@ -1222,7 +1417,8 @@ async function main() {
     console.log(
       `\nMigration complete: ${totals.categoriesCreated + totals.categoriesUpdated} category row(s), ` +
         `${totals.listingRowsRelinked} relink(s), ${totals.hideContactRows} hide_contact row(s), ` +
-        `${totals.communitiesCreated} community row(s), ${totals.listingCommunityLinks} listing link(s), ` +
+        `${totals.communitiesCreated} community row(s), ${totals.communityContentFills} community content fill(s), ` +
+        `${totals.listingCommunityLinks} listing link(s), ` +
         `${totals.memberCommunityLinks} member link(s), artisan listing ${totals.artisanRows} row(s), ` +
         `good-practices ${totals.goodPracticesRows} row(s), phones ${totals.phonesRows} row(s). Snapshot: ${snapshotPath}`
     );

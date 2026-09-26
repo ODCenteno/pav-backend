@@ -47,6 +47,15 @@ import migrate from '../scripts/migrate-redesign.js';
 const { UID, LOCALES, ARTISAN_LISTING, COMMUNITY_CONTRACT } = migrate;
 const [ES, EN] = LOCALES;
 
+// Homepage UID as a literal so the seeds below do not depend on the
+// migration script exporting it (the script adds UID.homepage later).
+const HOMEPAGE_UID = 'api::homepage.homepage';
+
+// Id of the single upload file row seeded for highlight-card images
+// (highlight-card.image is REQUIRED media). Reused by the fill test when
+// it writes a custom editor card.
+let highlightImageFileId;
+
 function tmpPath(prefix, ext) {
   return path.join(os.tmpdir(), `${prefix}-${process.pid}-${crypto.randomBytes(4).toString('hex')}.${ext}`);
 }
@@ -68,6 +77,26 @@ async function createBothLocales(uid, esData, enData, { publish = false } = {}) 
     ...(publish ? { status: 'published' } : {}),
   });
   return es.documentId;
+}
+
+/**
+ * Read one community variant through the Document Service with the
+ * homepage-content fields populated. Nested populate is required for the
+ * media inside highlight cards: a plain array populate returns component
+ * rows WITHOUT their media (verified empirically on Strapi 5.39).
+ */
+async function readCommunity(slug, locale, status) {
+  return strapi.documents(UID.community).findFirst({
+    filters: { slug },
+    locale,
+    status,
+    populate: {
+      highlights: { populate: { image: true } },
+      highlightsHeader: true,
+      quickFacts: true,
+      quickFactsHeader: true,
+    },
+  });
 }
 
 const CATEGORY_SEEDS = [
@@ -274,6 +303,48 @@ async function seedDatabase() {
     drivingTips: [{ text: 'Drive slowly on dirt roads.' }],
   };
   await createBothLocales(UID.guidePage, guideEs, guideEn, { publish: true });
+
+  // One upload file row so the homepage highlight cards can carry their
+  // REQUIRED image (media passed by id through the Document Service, the
+  // same way the migration passes it). Required columns on the files table
+  // in Strapi 5.39: name, hash, mime, size, url, provider, folderPath.
+  const highlightFile = await strapi.db.query('plugin::upload.file').create({
+    data: {
+      name: 'kayak.jpg',
+      hash: 'migrate-redesign-test-kayak',
+      ext: '.jpg',
+      mime: 'image/jpeg',
+      size: 1024,
+      url: '/uploads/migrate-redesign-test-kayak.jpg',
+      provider: 'local',
+      folderPath: '/',
+    },
+  });
+  highlightImageFileId = highlightFile.id;
+
+  // Homepage single type (both locales, published): the source the
+  // migration copies highlights / quick-facts content from.
+  const homepageEs = {
+    internalLabel: 'Homepage',
+    highlightsHeader: { title: 'Experiencias destacadas', subtitle: null },
+    highlights: [
+      { title: 'Tour en kayak', description: 'Rema al amanecer.', image: highlightImageFileId, link: '/sitios' },
+      { title: 'Snorkel', description: null, image: highlightImageFileId, link: null },
+    ],
+    quickFactsHeader: { title: 'Datos rápidos', subtitle: null },
+    quickFacts: [{ title: 'Población', value: '250', description: null }],
+  };
+  const homepageEn = {
+    internalLabel: 'Homepage',
+    highlightsHeader: { title: 'Featured experiences', subtitle: null },
+    highlights: [
+      { title: 'Kayak tour', description: 'Paddle at dawn.', image: highlightImageFileId, link: '/en/sites' },
+      { title: 'Snorkeling', description: null, image: highlightImageFileId, link: null },
+    ],
+    quickFactsHeader: { title: 'Quick facts', subtitle: null },
+    quickFacts: [{ title: 'Population', value: '250', description: null }],
+  };
+  await createBothLocales(HOMEPAGE_UID, homepageEs, homepageEn, { publish: true });
 }
 
 describe('contact-info schema (contract §5b)', () => {
@@ -409,6 +480,8 @@ describe('migrate-redesign (Strapi-backed)', () => {
     expect(migrate.planHasWork(plan)).toBe(true);
     expect(plan.categories.createDocs.map((d) => d.slug).sort()).toEqual(['crafts', 'gastronomy']);
     expect(plan.communities.createDocs.map((d) => d.slug).sort()).toEqual(['puerto-agua-verde', 'rancho-san-cosme']);
+    // Fresh DB: no communities exist yet, so there is nothing to FILL.
+    expect(plan.communityContent.fills).toHaveLength(0);
     expect(plan.artisan.create).toBeTruthy();
     expect(plan.goodPractices.create).toBeTruthy();
     expect(plan.craftsCandidates.map((c) => c.slug)).toContain('artesanias-andrea');
@@ -492,6 +565,26 @@ describe('migrate-redesign (Strapi-backed)', () => {
     });
     expect(rsc.location.geoPoint.lat).toBeCloseTo(25.5784138, 5);
     expect(rsc.location.geoPoint.lng).toBeCloseTo(-111.1694027, 5);
+
+    // 2b. Homepage highlights/quick-facts copied onto BOTH communities,
+    //     both locales, draft AND published variants; card images kept.
+    for (const c of COMMUNITY_CONTRACT) {
+      for (const locale of LOCALES) {
+        for (const status of ['draft', 'published']) {
+          const row = await readCommunity(c.slug, locale, status);
+          expect(row, `${c.slug} ${locale} ${status}`).toBeTruthy();
+          expect(row.highlightsHeader?.title, `${c.slug} ${locale} ${status} highlightsHeader`).toBe(
+            locale === ES ? 'Experiencias destacadas' : 'Featured experiences'
+          );
+          expect(row.highlights.length, `${c.slug} ${locale} ${status} highlights`).toBeGreaterThanOrEqual(1);
+          expect(row.highlights[0].image, `${c.slug} ${locale} ${status} highlight image`).toBeTruthy();
+          expect(row.quickFactsHeader?.title, `${c.slug} ${locale} ${status} quickFactsHeader`).toBe(
+            locale === ES ? 'Datos rápidos' : 'Quick facts'
+          );
+          expect(row.quickFacts[0]?.value, `${c.slug} ${locale} ${status} quickFacts`).toBe('250');
+        }
+      }
+    }
 
     // 3. Listings resolve category and community, draft + published, both locales.
     //    casa-huespedes has no community source on purpose (expected to stay
@@ -648,6 +741,8 @@ describe('migrate-redesign (Strapi-backed)', () => {
     expect(plan.memberCommunity.links).toHaveLength(0);
     expect(plan.artisan.skipped).toBe(true);
     expect(plan.goodPractices.skipped).toBe(true);
+    // Homepage-content fills: nothing left empty on any variant.
+    expect(plan.communityContent.fills).toHaveLength(0);
     // Phones: nothing left to fill; manual review is informational only, so
     // esther's unparseable legacy phone is still listed (and not blocking).
     expect(plan.phones.updates).toHaveLength(0);
@@ -692,6 +787,151 @@ describe('migrate-redesign (Strapi-backed)', () => {
     expect(tallerEs.community.slug).toBe('rancho-san-cosme');
 
     const finalPlan = await migrate.planMigration(strapi, {});
+    expect(migrate.planHasWork(finalPlan)).toBe(false);
+  }, TIMEOUT);
+
+  it('fills homepage content on existing communities only where empty', async () => {
+    // Strapi 5.39 Document Service semantics (verified empirically and in
+    // @strapi/core repository.js): an update with status 'published' writes
+    // the DRAFT row and then REPUBLISHES (the published row is deleted and
+    // recreated from the draft), so content lands on BOTH variants and the
+    // published variant can never be written in isolation. The planner is
+    // variant-pair aware as a result:
+    //   - both variants empty            -> one fill, status 'published'
+    //                                        (lands on both variants)
+    //   - draft empty, published filled  -> fill, status 'draft' (draft
+    //                                        write only, never publishes)
+    //   - published empty, draft filled  -> MANUAL REVIEW: no Document
+    //                                        Service write can fill the
+    //                                        published variant without
+    //                                        overwriting the draft's editor
+    //                                        content, so nothing is written
+    const rscDoc = await strapi.documents(UID.community).findFirst({
+      filters: { slug: 'rancho-san-cosme' },
+      locale: ES,
+      status: 'draft',
+    });
+    const pavDoc = await strapi.documents(UID.community).findFirst({
+      filters: { slug: 'puerto-agua-verde' },
+      locale: ES,
+      status: 'draft',
+    });
+
+    // a. rancho-san-cosme ES: clear all 4 fields on BOTH variants.
+    for (const status of ['draft', 'published']) {
+      await strapi.documents(UID.community).update({
+        documentId: rscDoc.documentId,
+        locale: ES,
+        status,
+        data: { highlights: [], highlightsHeader: null, quickFacts: [], quickFactsHeader: null },
+      });
+    }
+
+    // b1. rancho-san-cosme EN: clear highlights + header on the published
+    //     variant (this clears the draft too: a published update IS a draft
+    //     update + republish), then put CUSTOM editor content on the draft
+    //     only — the never-overwrite case. quickFacts stay filled.
+    await strapi.documents(UID.community).update({
+      documentId: rscDoc.documentId,
+      locale: EN,
+      status: 'published',
+      data: { highlights: [], highlightsHeader: null },
+    });
+    await strapi.documents(UID.community).update({
+      documentId: rscDoc.documentId,
+      locale: EN,
+      status: 'draft',
+      data: {
+        highlights: [{ title: 'Editorial pick', description: null, image: highlightImageFileId, link: null }],
+        highlightsHeader: { title: 'Editor picks', subtitle: null },
+      },
+    });
+
+    // b2. puerto-agua-verde ES: clear the quickFacts pair on the DRAFT
+    //     variant only; the published variant keeps its content.
+    await strapi.documents(UID.community).update({
+      documentId: pavDoc.documentId,
+      locale: ES,
+      status: 'draft',
+      data: { quickFacts: [], quickFactsHeader: null },
+    });
+    const pavPubBefore = (
+      await strapi.db.query(UID.community).findMany({
+        where: { slug: 'puerto-agua-verde', locale: ES, publishedAt: { $notNull: true } },
+        select: ['id'],
+      })
+    )[0];
+
+    // c. Plan the fills.
+    const plan = await migrate.planMigration(strapi, {});
+    const fills = plan.communityContent.fills;
+    const has = (slug, locale, status, field) =>
+      fills.some((f) => f.slug === slug && f.locale === locale && f.status === status && f.field === field);
+
+    // rancho-san-cosme ES: 4 fills with status 'published' (both variants
+    // were empty; a single both-variant fill is planned, not two).
+    for (const field of ['highlights', 'highlightsHeader', 'quickFacts', 'quickFactsHeader']) {
+      expect(has('rancho-san-cosme', ES, 'published', field), `rsc ES ${field}`).toBe(true);
+      expect(has('rancho-san-cosme', ES, 'draft', field), `rsc ES ${field} must be one both-variant fill`).toBe(false);
+    }
+    // puerto-agua-verde ES: 2 draft fills for the quickFacts pair only.
+    expect(has('puerto-agua-verde', ES, 'draft', 'quickFacts')).toBe(true);
+    expect(has('puerto-agua-verde', ES, 'draft', 'quickFactsHeader')).toBe(true);
+    expect(fills.filter((f) => f.slug === 'puerto-agua-verde')).toHaveLength(2);
+    // Totals: 6 fills, NONE for EN (the custom draft content blocks the
+    // highlights pair, everything else on EN is already filled).
+    expect(fills).toHaveLength(6);
+    expect(fills.filter((f) => f.locale === EN)).toHaveLength(0);
+    // Editor content blocks the EN highlights pair -> manual review, never
+    // a planned write.
+    expect(plan.communityContent.manualReview.some((m) => m.slug === 'rancho-san-cosme' && m.locale === EN && m.field === 'highlights')).toBe(true);
+    expect(plan.communityContent.manualReview.some((m) => m.slug === 'rancho-san-cosme' && m.locale === EN && m.field === 'highlightsHeader')).toBe(true);
+
+    // d. Apply, then read back every scenario.
+    const snapshotPath = tmpPath('migrate-redesign-snapshot-content-fill', 'json');
+    const totals = await migrate.applyMigration(strapi, plan, { snapshotPath });
+    expect(totals.communityContentFills).toBe(6);
+    const snap = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+    expect(snap.planned.communityContentFills).toBe(6);
+
+    // rancho-san-cosme ES: BOTH variants refilled, images kept.
+    for (const status of ['draft', 'published']) {
+      const row = await readCommunity('rancho-san-cosme', ES, status);
+      expect(row.highlightsHeader?.title, `rsc ES ${status} highlightsHeader`).toBe('Experiencias destacadas');
+      expect(row.highlights, `rsc ES ${status} highlights`).toHaveLength(2);
+      expect(row.highlights[0].title).toBe('Tour en kayak');
+      expect(row.highlights[0].image, `rsc ES ${status} highlight image`).toBeTruthy();
+      expect(row.quickFactsHeader?.title, `rsc ES ${status} quickFactsHeader`).toBe('Datos rápidos');
+      expect(row.quickFacts[0]?.value, `rsc ES ${status} quickFacts`).toBe('250');
+    }
+
+    // puerto-agua-verde ES draft refilled; the published variant was never
+    // republished (row id unchanged — a draft fill must not publish).
+    const pavEsDraft = await readCommunity('puerto-agua-verde', ES, 'draft');
+    expect(pavEsDraft.quickFacts[0]?.value).toBe('250');
+    expect(pavEsDraft.quickFactsHeader?.title).toBe('Datos rápidos');
+    const pavPubAfter = (
+      await strapi.db.query(UID.community).findMany({
+        where: { slug: 'puerto-agua-verde', locale: ES, publishedAt: { $notNull: true } },
+        select: ['id'],
+      })
+    )[0];
+    expect(pavPubAfter.id).toBe(pavPubBefore.id);
+
+    // rancho-san-cosme EN: the custom editor content is NEVER overwritten,
+    // the blocked published variant stays empty, quickFacts stay untouched.
+    const rscEnDraft = await readCommunity('rancho-san-cosme', EN, 'draft');
+    expect(rscEnDraft.highlights.map((h) => h.title)).toEqual(['Editorial pick']);
+    expect(rscEnDraft.highlightsHeader?.title).toBe('Editor picks');
+    const rscEnPub = await readCommunity('rancho-san-cosme', EN, 'published');
+    expect(rscEnPub.highlights).toHaveLength(0);
+    expect(rscEnPub.highlightsHeader ?? null).toBeNull();
+    expect(rscEnPub.quickFacts[0]?.value).toBe('250');
+
+    // e. Idempotent: nothing left to fill (the blocked EN pair keeps being
+    //    reported as manual review, which is informational only).
+    const finalPlan = await migrate.planMigration(strapi, {});
+    expect(finalPlan.communityContent.fills).toHaveLength(0);
     expect(migrate.planHasWork(finalPlan)).toBe(false);
   }, TIMEOUT);
 });
