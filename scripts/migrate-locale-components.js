@@ -488,10 +488,19 @@ async function tableExists(db, dialect, table) {
 /**
  * componentType UID -> collectionName, read from the repo's component
  * schemas next to this script. Only tables that exist in the DB are kept.
+ * Components removed by the A5 contract cleanup keep a hardcoded fallback
+ * here so this completed one-shot still resolves them on historical
+ * databases (their schema files no longer exist).
  */
+const LEGACY_COMPONENT_TABLES = {
+  'common.localized-text': 'components_common_localized_texts',
+  'recommendation.visit-info': 'components_recommendation_visit_infos',
+  'contact.social-links': 'components_contact_social_links',
+};
+
 async function componentTableMap(db, dialect) {
   const dir = path.resolve(__dirname, '..', 'src', 'components');
-  const map = {};
+  const map = { ...LEGACY_COMPONENT_TABLES };
   if (fs.existsSync(dir)) {
     for (const group of fs.readdirSync(dir)) {
       const groupDir = path.join(dir, group);

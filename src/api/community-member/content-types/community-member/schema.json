@@ -36,12 +36,6 @@
       },
       "description": "Rol u oficio principal. Ejemplo: Guía de kayak, Artesana de palma, Cocinera tradicional."
     },
-    "locality": {
-      "type": "enumeration",
-      "enum": ["agua-verde", "rancho-san-cosme"],
-      "default": "agua-verde",
-      "description": "Localidad donde vive o trabaja la persona."
-    },
     "bio": {
       "type": "richtext",
       "pluginOptions": {

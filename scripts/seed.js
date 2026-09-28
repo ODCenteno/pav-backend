@@ -505,20 +505,6 @@ async function seedHomepage() {
       ctaLabel: "Explorar el destino",
       ctaLink: "/sitios",
     },
-    destinationsHeader: {
-      title: "Conoce el destino",
-      subtitle: "Descubre la historia y cultura de estos lugares únicos",
-    },
-    destinations: [
-      {
-        title: "Puerto Agua Verde",
-        text: "Puerto Agua Verde es un pequeño rincón de Baja California Sur conocido por sus aguas color turquesa, su ambiente comunitario y su naturaleza intacta. Aquí se combinan la pesca tradicional, las playas tranquilas y las actividades al aire libre que atraen a viajeros en busca de autenticidad y paz.",
-      },
-      {
-        title: "Rancho San Cosme",
-        text: "Rancho San Cosme es un espacio histórico y cultural donde la vida rural se mantiene viva. Rodeado de montañas y vegetación desértica, es un punto de encuentro para visitantes que buscan experiencias locales, senderos, actividades guiadas y conexión con la naturaleza.",
-      },
-    ],
     highlightsHeader: {
       title: "Lo más destacado",
       subtitle: "Descubre las mejores opciones para tu visita",
@@ -613,20 +599,6 @@ async function seedHomepage() {
       ctaLabel: "Explore the destination",
       ctaLink: "/en/sitios",
     },
-    destinationsHeader: {
-      title: "Discover the destination",
-      subtitle: "Learn about the history and culture of these unique places",
-    },
-    destinations: [
-      {
-        title: "Puerto Agua Verde",
-        text: "Puerto Agua Verde is a small corner of Baja California Sur known for its turquoise waters, community atmosphere, and untouched nature. Here, traditional fishing, quiet beaches, and outdoor activities combine to attract travelers in search of authenticity and peace.",
-      },
-      {
-        title: "Rancho San Cosme",
-        text: "Rancho San Cosme is a historical and cultural space where rural life remains alive. Surrounded by mountains and desert vegetation, it is a meeting point for visitors seeking local experiences, trails, guided activities, and connection with nature.",
-      },
-    ],
     highlightsHeader: {
       title: "Highlights",
       subtitle: "Discover the best options for your visit",

@@ -231,10 +231,8 @@ describe('redesign contract section 8: homepage additions', () => {
     });
   });
 
-  it('keeps the full expand-only attribute set (previous fields plus regionMapImage)', () => {
+  it('keeps the contract attribute set (destinations pair removed)', () => {
     expect(Object.keys(schema.attributes).sort()).toEqual([
-      'destinations',
-      'destinationsHeader',
       'finalCta',
       'hero',
       'highlights',

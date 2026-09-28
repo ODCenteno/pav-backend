@@ -32,28 +32,6 @@
       },
       "description": "Carrusel principal en la parte superior de la página (hero)."
     },
-    "destinationsHeader": {
-      "type": "component",
-      "component": "section.section-header",
-      "repeatable": false,
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "description": "Encabezado de la sección de destinos."
-    },
-    "destinations": {
-      "type": "component",
-      "component": "destination.destination-story",
-      "repeatable": true,
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "description": "Tarjetas de historias de destinos. Agrega una por cada destino destacado."
-    },
     "highlightsHeader": {
       "type": "component",
       "component": "section.section-header",

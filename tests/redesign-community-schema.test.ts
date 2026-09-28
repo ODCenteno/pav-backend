@@ -254,11 +254,10 @@ describe('redesign contract section 6: community-member additions', () => {
   });
 });
 
-describe('redesign expand-only legacy guards', () => {
-  it('community-member keeps the locality enum with both values', () => {
-    const locality = loadSchema('community-member').attributes.locality;
-    expect(locality.type).toBe('enumeration');
-    expect(locality.enum.sort()).toEqual(['agua-verde', 'rancho-san-cosme']);
+describe('redesign contract-phase cleanup invariants', () => {
+  it('community-member no longer has the locality attribute', () => {
+    const attributes = loadSchema('community-member').attributes;
+    expect(attributes.locality).toBeUndefined();
   });
 
   it('listing keeps category, slug and isFeatured', () => {
@@ -268,16 +267,30 @@ describe('redesign expand-only legacy guards', () => {
     expect(attributes.isFeatured.type).toBe('boolean');
   });
 
-  it('homepage keeps destinations and destinationsHeader', () => {
+  it('homepage no longer has destinations or destinationsHeader', () => {
     const attributes = loadSchema('homepage').attributes;
-    expect(attributes.destinations.component).toBe('destination.destination-story');
-    expect(attributes.destinationsHeader.component).toBe('section.section-header');
+    expect(attributes.destinations).toBeUndefined();
+    expect(attributes.destinationsHeader).toBeUndefined();
   });
 
-  it('guide-page still exists and keeps historyMilestones, historyText and protectedArea', () => {
-    const attributes = loadSchema('guide-page').attributes;
-    expect(attributes.historyMilestones.component).toBe('guide.milestone');
-    expect(attributes.historyText.type).toBe('text');
-    expect(attributes.protectedArea.component).toBe('guide.protected-link');
+  it('guide-page content type no longer exists', () => {
+    const schemaPath = path.join(
+      __dirname,
+      '..',
+      'src',
+      'api',
+      'guide-page',
+      'content-types',
+      'guide-page',
+      'schema.json'
+    );
+    expect(fs.existsSync(schemaPath)).toBe(false);
+  });
+
+  it('the other removed content types no longer exist', () => {
+    for (const ct of ['experiences-page', 'about-page', 'team-member', 'organization']) {
+      const schemaPath = path.join(__dirname, '..', 'src', 'api', ct, 'content-types', ct, 'schema.json');
+      expect(fs.existsSync(schemaPath), `${ct} schema must be gone`).toBe(false);
+    }
   });
 });

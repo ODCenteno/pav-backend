@@ -10,19 +10,12 @@ const PUBLIC_PERMISSIONS = [
   'api::community-member.community-member.findOne',
   'api::community.community.find',
   'api::community.community.findOne',
-  'api::team-member.team-member.find',
-  'api::team-member.team-member.findOne',
-  'api::organization.organization.find',
-  'api::organization.organization.findOne',
   'api::site-content.site-content.find',
   'api::site-content.site-content.findOne',
   'api::legal-page.legal-page.find',
   'api::legal-page.legal-page.findOne',
   'api::site-global.site-global.find',
   'api::homepage.homepage.find',
-  'api::experiences-page.experiences-page.find',
-  'api::about-page.about-page.find',
-  'api::guide-page.guide-page.find',
   'api::good-practices-page.good-practices-page.find',
 ];
 
@@ -32,7 +25,6 @@ export default {
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
     subscribeSharedSlugSync(strapi);
     await seedPublicPermissions(strapi);
-    await migrateSocialToContact(strapi);
   },
 };
 
@@ -58,69 +50,4 @@ async function seedPublicPermissions(strapi: Core.Strapi) {
       strapi.log.info(`Granted public permission: ${action}`);
     }
   }
-}
-
-/**
- * One-time migration: consolidate community-member native phone/whatsapp
- * fields into the new contact-info component.
- *
- * Guarded by a core-store flag so it only runs once. If any step fails the
- * flag is not written, so the migration retries on the next boot.
- */
-async function migrateSocialToContact(strapi: Core.Strapi) {
-  const STORE_KEY = 'migration_social_to_contact_v1';
-  const coreStore = strapi.store({ type: 'core', name: '' });
-  const alreadyRun = await coreStore.get({ key: STORE_KEY });
-
-  if (alreadyRun) {
-    return;
-  }
-
-  strapi.log.info('[migration] Starting social→contact consolidation...');
-
-  let failed = false;
-
-  // Migrate community-member phone/whatsapp → contact-info
-  try {
-    const members = await strapi.db.query('api::community-member.community-member').findMany({
-      select: ['id', 'phone', 'whatsapp'],
-      populate: { contact: true },
-    });
-
-    let memberCount = 0;
-    for (const member of members) {
-      const phone = (member as any).phone;
-      const whatsapp = (member as any).whatsapp;
-      const existingContact = (member as any).contact;
-
-      if (!phone && !whatsapp) continue;
-      if (existingContact) continue; // already has a contact component
-
-      // Create a new contact-info component and link it
-      const newContact = await strapi.db.query('components_contact_contact_infos').create({
-        data: {
-          phone: phone || null,
-          whatsapp: whatsapp || null,
-        },
-      });
-
-      await strapi.db.query('api::community-member.community-member').update({
-        where: { id: member.id },
-        data: { contact: newContact.id },
-      });
-      memberCount++;
-    }
-    strapi.log.info(`[migration] Migrated ${memberCount} community-member phone/whatsapp → contact-info`);
-  } catch (err) {
-    failed = true;
-    strapi.log.warn('[migration] Community-member contact migration failed (non-fatal):', err);
-  }
-
-  if (failed) {
-    strapi.log.warn('[migration] social→contact consolidation incomplete; will retry on next boot.');
-    return;
-  }
-
-  await coreStore.set({ key: STORE_KEY, value: true });
-  strapi.log.info('[migration] social→contact consolidation complete.');
 }
