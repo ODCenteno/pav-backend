@@ -9,14 +9,6 @@
   },
   "options": {},
   "attributes": {
-    "whatsapp": {
-      "type": "string",
-      "description": "Obsoleto: usar los campos de código y número (whatsappCountryCode + whatsappNumber). Número de WhatsApp con formato libre. Ej: +521234567890"
-    },
-    "phone": {
-      "type": "string",
-      "description": "Obsoleto: usar los campos de código y número (phoneCountryCode + phoneNumber). Número de teléfono con formato libre. Ej: +521234567890"
-    },
     "phoneCountryCode": {
       "type": "string",
       "regex": "^\\+[1-9]\\d{0,2}$",
