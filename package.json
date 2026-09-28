@@ -14,7 +14,7 @@
     "strapi": "strapi",
     "seed": "node scripts/seed.js",
     "import:community": "node scripts/import-community.js",
-    "migrate:redesign": "node scripts/migrate-redesign.js",
+    "cleanup:redesign": "node scripts/cleanup-redesign.js",
     "validate:transfer": "node scripts/validate-transfer.js",
     "upgrade": "npx @strapi/upgrade latest",
     "upgrade:dry": "npx @strapi/upgrade latest --dry",
