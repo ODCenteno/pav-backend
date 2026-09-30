@@ -151,7 +151,7 @@
           "localized": true
         }
       },
-      "description": "Servicios e incluyos disponibles para el visitante (etiqueta + descripción opcional). Agrega uno por elemento."
+      "description": "Servicios e incluidos disponibles para el visitante (etiqueta + descripción opcional). Agrega uno por elemento."
     },
     "recommendations": {
       "type": "component",

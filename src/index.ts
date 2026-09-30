@@ -1,5 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import { subscribeSharedSlugSync } from './sync-shared-slug';
+import { FIELD_LABELS } from './admin-labels';
+import { syncAdminLabels } from './sync-admin-labels';
 
 const PUBLIC_PERMISSIONS = [
   'api::category.category.find',
@@ -25,6 +27,7 @@ export default {
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
     subscribeSharedSlugSync(strapi);
     await seedPublicPermissions(strapi);
+    await syncAdminLabels(strapi, FIELD_LABELS);
   },
 };
 

@@ -49,7 +49,7 @@
     "ctaLink": {
       "type": "string",
       "default": "/sitios",
-      "description": "URL a la que lleva el botón. Ejemplo: /sitios, /experiencias."
+      "description": "URL a la que lleva el botón. Ejemplo: /sitios/, /comunidades/puerto-agua-verde/."
     },
     "images": {
       "type": "media",

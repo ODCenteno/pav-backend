@@ -20,7 +20,7 @@
       "type": "string",
       "required": true,
       "unique": true,
-      "description": "Identificador único de la sección. Ejemplo: about-intro, guide-hero, footer-contact. Solo letras, números y guiones."
+      "description": "Identificador único de la sección. Ejemplo: footer-about (texto del pie de página). Solo letras, números y guiones."
     },
     "title": {
       "type": "string",
@@ -47,7 +47,7 @@
     },
     "extraData": {
       "type": "json",
-      "description": "Datos adicionales en JSON. La estructura depende de la clave (key) de este bloque. Consulta con el equipo técnico antes de modificar. Ejemplo: para key=guide-directions contiene objetos con label, desc, distance, time, image por origen."
+      "description": "Datos adicionales en JSON. La estructura depende de la clave (key) de este bloque. Consulta con el equipo técnico antes de modificar. Ejemplo: para key=footer-about contiene los textos thanks, rights y legal del pie de página."
     }
   }
 }

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import bootstrapModule from '../src/index';
+import { FIELD_LABELS } from '../src/admin-labels';
+import { syncAdminLabels } from '../src/sync-admin-labels';
+
+vi.mock('../src/sync-admin-labels', () => ({ syncAdminLabels: vi.fn(async () => {}) }));
 
 const { bootstrap } = bootstrapModule;
 
@@ -139,5 +143,14 @@ describe('bootstrap: social-to-contact migration removal', () => {
     const queriedUids = fake.strapi.db.query.mock.calls.map((call: any[]) => call[0]);
     expect(queriedUids).not.toContain('api::community-member.community-member');
     expect(queriedUids).not.toContain('components_contact_contact_infos');
+  });
+});
+
+describe('bootstrap: admin label sync', () => {
+  it('applies the Spanish field labels to the Content Manager', async () => {
+    const fake = makeStrapi();
+    await bootstrap({ strapi: fake.strapi });
+
+    expect(syncAdminLabels).toHaveBeenCalledWith(fake.strapi, FIELD_LABELS);
   });
 });
